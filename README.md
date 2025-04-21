@@ -1,36 +1,90 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 5G Network Simulator
+
+A comprehensive visualization and simulation tool for 5G network architecture, protocols, and security mechanisms.
+
+## Features
+
+- **Network Visualization**: Interactive visualization of 5G network functions and their connections using D3.js
+- **Protocol Simulation**: Simulate key 5G protocols including authentication and session establishment
+- **Security Analysis**: Analyze and understand 5G security mechanisms and key hierarchies
+- **Real-time Messaging**: Visualize message passing between network functions
+
+## Tech Stack
+
+- **Frontend**: Next.js (App Router), TypeScript, TailwindCSS
+- **Visualization**: D3.js for network visualization, Mermaid for protocol diagrams
+- **Database**: MongoDB/Mongoose for data persistence
+- **Backend**: RESTful APIs built with Next.js API routes
+
+## Project Structure
+
+```
+5g-simulator/
+├── src/
+│   ├── app/              # Next.js app router
+│   ├── components/       # Reusable UI components
+│   │   ├── network/      # Network visualization components
+│   │   ├── protocol/     # Protocol visualization components
+│   │   └── ui/           # General UI components
+│   ├── hooks/            # Custom React hooks
+│   ├── lib/              # Utility functions and shared code
+│   ├── models/           # MongoDB schema definitions
+│   ├── services/         # Business logic and API integrations
+│   │   ├── simulator/    # 5G network simulation services
+│   │   └── security/     # Security protocol services
+│   └── types/            # TypeScript type definitions
+└── public/               # Static assets
+```
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Node.js 18+
+- npm or yarn
+- MongoDB (optional for full functionality)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Installation
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Clone the repository:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+   ```bash
+   git clone https://github.com/your-username/5g-simulator.git
+   cd 5g-simulator
+   ```
 
-## Learn More
+2. Install dependencies:
 
-To learn more about Next.js, take a look at the following resources:
+   ```bash
+   npm install
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+3. Run the development server:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+   ```bash
+   npm run dev
+   ```
 
-## Deploy on Vercel
+4. Open [http://localhost:3000](http://localhost:3000) in your browser to see the application.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Simulated 5G Protocols
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The simulator demonstrates several key 5G protocols:
+
+1. **5G-AKA Authentication**: The authentication flow between UE, AMF, AUSF, and UDM
+2. **PDU Session Establishment**: The process of establishing a session between UE, AMF, SMF, and UPF
+3. **Registration Procedure**: The registration flow for a UE connecting to the network
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- 3GPP specifications for 5G architecture
+- Open5GS project for reference implementation
+- The Next.js and React communities for excellent tools and libraries

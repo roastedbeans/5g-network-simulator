@@ -1,0 +1,259 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+5G Network Simulator Development Rules
+Project Architecture
+
+Directory Structure
+5g-simulator/
+├── .github/              # GitHub workflows and CI/CD
+├── src/
+│   ├── app/              # Next.js app router
+│   ├── components/       # Reusable UI components
+│   │   ├── network/      # Network visualization components
+│   │   ├── protocol/     # Protocol visualization components
+│   │   └── ui/           # General UI components
+│   ├── hooks/            # Custom React hooks
+│   ├── lib/              # Utility functions and shared code
+│   ├── models/           # MongoDB schema definitions
+│   ├── services/         # Business logic and API integrations
+│   │   ├── simulator/    # 5G network simulation services
+│   │   └── security/     # Security protocol services
+│   └── types/            # TypeScript type definitions
+├── public/               # Static assets
+└── tests/                # Test files
+
+Naming Conventions
+
+Files: Use kebab-case for filenames (e.g., network-function.tsx)
+Components: Use PascalCase (e.g., NetworkFunction.tsx)
+Functions/Variables: Use camelCase
+Types/Interfaces: Use PascalCase with descriptive names (e.g., NetworkFunctionProps)
+MongoDB Models: Use PascalCase singular nouns (e.g., NetworkFunction)
+
+
+Code Style
+
+Use ESLint with TypeScript rules
+Configure Prettier for consistent formatting
+Use strict TypeScript mode with no implicit any
+
+
+
+TypeScript Configuration
+
+Type Definitions
+
+Create dedicated type files for 5G network entities
+Define interfaces for all network functions
+Create strict type definitions for message protocols
+Use union types for different network states
+
+
+Example Types
+typescriptexport interface NetworkFunction {
+  id: string;
+  type: '5GC' | 'RAN' | 'UE' | 'AMF' | 'SMF' | 'UPF' | 'AUSF' | 'UDM';
+  status: 'active' | 'inactive' | 'error';
+  connections: Connection[];
+  position: Vector2D;
+  messages: Message[];
+}
+
+export interface Connection {
+  source: string; // Network Function ID
+  target: string; // Network Function ID
+  protocol: Protocol;
+  status: 'active' | 'inactive' | 'error';
+}
+
+export interface Message {
+  id: string;
+  type: MessageType;
+  source: string; // Network Function ID
+  destination: string; // Network Function ID
+  payload: unknown;
+  timestamp: Date;
+  securityContext?: SecurityContext;
+}
+
+export type Protocol = 'N1' | 'N2' | 'N3' | 'N4' | 'N6' | 'N8' | 'N11';
+
+
+MongoDB Schema Design
+
+Core Models
+
+NetworkFunction
+Connection
+Message
+Simulation
+SecurityProtocol
+
+
+Example Schema
+typescript// models/network-function.ts
+import mongoose from 'mongoose';
+import { NetworkFunction } from '@/types/network';
+
+const NetworkFunctionSchema = new mongoose.Schema<NetworkFunction>({
+  type: {
+    type: String,
+    enum: ['5GC', 'RAN', 'UE', 'AMF', 'SMF', 'UPF', 'AUSF', 'UDM'],
+    required: true
+  },
+  status: {
+    type: String,
+    enum: ['active', 'inactive', 'error'],
+    default: 'inactive'
+  },
+  connections: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Connection'
+  }],
+  position: {
+    x: { type: Number, required: true },
+    y: { type: Number, required: true }
+  },
+  messages: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Message'
+  }]
+}, { timestamps: true });
+
+export default mongoose.models.NetworkFunction || 
+  mongoose.model<NetworkFunction>('NetworkFunction', NetworkFunctionSchema);
+
+
+NextJS Implementation
+
+API Routes
+
+Create dedicated API routes for network functions
+Implement WebSocket for real-time updates
+Use middleware for authentication and logging
+
+
+Page Structure
+typescript// src/app/simulator/page.tsx
+import React from 'react';
+import NetworkVisualizer from '@/components/network/NetworkVisualizer';
+import SimulationControls from '@/components/simulator/SimulationControls';
+import { getNetworkFunctions } from '@/services/simulator/network-service';
+
+export default async function SimulatorPage() {
+  const networkFunctions = await getNetworkFunctions();
+  
+  return (
+    <div className="flex flex-col h-screen">
+      <SimulationControls />
+      <NetworkVisualizer initialData={networkFunctions} />
+    </div>
+  );
+}
+
+
+Visualization Components
+
+Network Visualization
+
+Use React components for each network function
+Implement D3.js or Three.js for interactive visualization
+Create animations for message passing
+Use color coding for different protocols and states
+
+
+Protocol Diagrams
+
+Generate Mermaid diagrams programmatically
+Create interactive sequence diagrams for security protocols
+Allow zooming and panning for detailed views
+
+
+
+Security Simulation Guidelines
+
+Protocol Implementation
+
+Implement 5G-AKA authentication
+Simulate confidentiality and integrity protection
+Model security context establishment
+Visualize key exchange protocols
+
+
+Threat Simulation
+
+Create models for common 5G threats
+Implement visualization for attack vectors
+Simulate security countermeasures
+
+
+
+Testing Strategy
+
+Unit Tests
+
+Test network function components
+Validate message passing logic
+Verify protocol implementation
+
+
+Integration Tests
+
+Test API endpoints
+Validate database operations
+Test real-time communication
+
+
+
+AI Agent Prompt
+I'm developing a 5G network simulator with the following technical stack:
+- NextJS (App Router) for frontend
+- TypeScript for type safety
+- MongoDB/Mongoose for data persistence
+- D3.js for network visualization
+- Mermaid for protocol diagrams
+- TailwindCSS for styling
+
+Project Context:
+- I've configured Open5GS to run in microk8s and Kubernetes
+- Network functions run on their own Docker images
+- They communicate via cloud messaging
+- I need to create a visual simulator that shows:
+  1. 5G network functions (AMF, SMF, UPF, AUSF, etc.)
+  2. Connections between functions
+  3. Message passing visualization
+  4. Security protocol implementation
+
+Current task: [SPECIFIC TASK DESCRIPTION]
+
+Please provide:
+1. TypeScript code that follows clean architecture principles
+2. MongoDB schema design if applicable
+3. React component structure and implementation
+4. Visualization approach for the specific network elements
+5. Detailed explanation of the 5G protocols being implemented
+
+Include diagrams using Mermaid syntax where appropriate to explain message flows, component architecture, or security protocols.
+Development Workflow
+
+Feature Implementation
+
+Implement network function components first
+Develop message passing mechanism
+Create visualization layer
+Implement security protocols
+Add real-time updates and simulation controls
+
+
+Integration with Kubernetes
+
+Establish communication with Open5GS instances
+Implement monitoring of network traffic
+Create adapters for different network functions
+
+
+
+This rule set provides a comprehensive framework for developing your 5G network simulator with NextJS, MongoDB, and TypeScript, with special attention to visualizing network functions and security protocols.

@@ -1,0 +1,10 @@
+<svg width="300" height="150" viewBox="0 0 300 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="300" height="150" rx="10" fill="#0F172A"/>
+  <path d="M65 42H90C95.5228 42 100 46.4772 100 52V62C100 67.5228 95.5228 72 90 72H70V82C70 87.5228 65.5228 92 60 92H50C44.4772 92 40 87.5228 40 82V52C40 46.4772 44.4772 42 50 42H65Z" fill="#3B82F6"/>
+  <path d="M65 57H85C87.2091 57 89 58.7909 89 61V63C89 65.2091 87.2091 67 85 67H65V57Z" fill="white"/>
+  <path d="M120 42H160C165.523 42 170 46.4772 170 52V92" stroke="#3B82F6" stroke-width="10" stroke-linecap="round"/>
+  <path d="M190 42V92" stroke="#3B82F6" stroke-width="10" stroke-linecap="round"/>
+  <path d="M220 42L250 92" stroke="#3B82F6" stroke-width="10" stroke-linecap="round"/>
+  <path d="M250 42L220 92" stroke="#3B82F6" stroke-width="10" stroke-linecap="round"/>
+  <text x="150" y="120" font-family="Arial" font-size="20" fill="white" text-anchor="middle">Network Simulator</text>
+</svg> 
