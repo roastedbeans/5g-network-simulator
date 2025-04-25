@@ -53,7 +53,7 @@ export async function createNetworkFunction(
 			name,
 			type,
 			plmn: {
-				id: '310-260',
+				id: '070-999',
 				name: 'VPLMN',
 				role: 'visited',
 			},
@@ -75,7 +75,7 @@ export async function createNetworkFunction(
 		name,
 		type,
 		plmn: {
-			id: '310-260',
+			id: '070-999',
 			name: 'VPLMN',
 			role: 'visited',
 		},

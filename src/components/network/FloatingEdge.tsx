@@ -11,7 +11,10 @@ export interface FloatingEdgeProps extends Partial<EdgeProps> {
 		sourceName?: string;
 		targetName?: string;
 		animated?: boolean;
+		animationClass?: string;
 	};
+	selected?: boolean;
+	animated?: boolean;
 }
 
 // Protocol color mapping
@@ -50,7 +53,16 @@ const protocolStrokeDashArrays: Record<ProtocolType, string> = {
 	N32: '10,5', // Long dash-short dash
 };
 
-const FloatingEdge = ({ id, source, target, markerEnd, style = {}, data }: FloatingEdgeProps) => {
+const FloatingEdge = ({
+	id,
+	source,
+	target,
+	markerEnd,
+	style = {},
+	data,
+	selected,
+	animated: edgeAnimated,
+}: FloatingEdgeProps) => {
 	const sourceNode = useInternalNode(source);
 	const targetNode = useInternalNode(target);
 
@@ -74,7 +86,6 @@ const FloatingEdge = ({ id, source, target, markerEnd, style = {}, data }: Float
 	const protocol = data?.protocol as ProtocolType;
 	const edgeColor = protocol && protocolColors[protocol] ? protocolColors[protocol] : '#888888';
 	const strokeDashArray = protocol && protocolStrokeDashArrays[protocol] ? protocolStrokeDashArrays[protocol] : '0';
-	const animated = data?.animated || false;
 
 	// Get source and target names
 	const sourceName = data?.sourceName || '';
@@ -84,16 +95,16 @@ const FloatingEdge = ({ id, source, target, markerEnd, style = {}, data }: Float
 		<>
 			<path
 				id={id}
-				className={`react-flow__edge-path ${animated ? 'animated' : ''}`}
+				className={`react-flow__edge-path`}
 				d={edgePath}
-				strokeWidth={2}
+				strokeWidth={selected ? 3 : 2}
 				stroke={edgeColor}
 				strokeDasharray={strokeDashArray}
 				markerEnd={markerEnd}
 				style={{
 					...style,
+
 					stroke: edgeColor,
-					animation: animated ? 'flowAnimation 30s infinite linear' : 'none',
 				}}
 			/>
 
@@ -108,10 +119,11 @@ const FloatingEdge = ({ id, source, target, markerEnd, style = {}, data }: Float
 					requiredExtensions='http://www.w3.org/1999/xhtml'>
 					<div className='flex justify-center items-center h-full'>
 						<div
-							className='px-2 py-1 rounded text-xs font-bold bg-white'
+							className={`px-2 py-1 rounded text-xs font-bold bg-white ${selected ? 'ring-2 ring-offset-1' : ''}`}
 							style={{
 								border: `1.5px solid ${edgeColor}`,
 								color: edgeColor,
+								boxShadow: selected ? '0 0 8px rgba(0,0,0,0.3)' : 'none',
 							}}>
 							{protocol}
 						</div>

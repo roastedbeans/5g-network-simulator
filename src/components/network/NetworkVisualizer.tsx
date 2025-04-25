@@ -23,6 +23,10 @@ import { NetworkFunction, Connection, Message } from '@/types/network';
 import { Button } from '@heroui/react';
 import NetworkFunctionNode from './NetworkNode';
 import FloatingEdge from './FloatingEdge';
+import dynamic from 'next/dynamic';
+
+// Dynamically import the modal component to avoid SSR issues with mermaid
+const ProtocolDiagramModal = dynamic(() => import('./ProtocolDiagramModal'), { ssr: false });
 
 // Basic type color map
 const typeColorMap: Record<string, string> = {
@@ -53,199 +57,106 @@ const edgeTypes: EdgeTypes = {
 	floating: FloatingEdge,
 };
 
-// Automatic layout function to position nodes in a grid with appropriate spacing
+// Auto layout function that applies a one-time 20% spread from original positions
 const calculateAutomaticLayout = (
 	nodes: any[],
 	connections: any[],
 	existingPositions: Record<string, { x: number; y: number }> = {},
 	forceLayout = false
 ): Record<string, { x: number; y: number }> => {
-	// If we already have positions for all nodes and force layout is false, keep them
-	const allNodesHavePositions = nodes.every((node) => existingPositions[node.id]);
-	if (allNodesHavePositions && !forceLayout) {
-		return existingPositions;
-	}
+	// Store original positions for nodes if not already stored
+	// We use this to only apply the spread once from the original positions
+	const originalPositions: Record<string, { x: number; y: number }> = {};
+	const newPositions: Record<string, { x: number; y: number }> = {};
 
-	const positions: Record<string, { x: number; y: number }> = { ...existingPositions };
-
-	// Set base values for layout with increased spacing
-	const nodeWidth = 400; // Width of node cards plus spacing
-	const nodeHeight = 350; // Height of node cards plus spacing
-	const groupPadding = 100; // Padding between major groups (home vs visited)
-
-	// First separate by PLMN (home vs visited)
-	const homeNodes: any[] = [];
-	const visitedNodes: any[] = [];
-
+	// First, get all original positions from node data
 	nodes.forEach((node) => {
-		const plmnRole = node.data?.plmn?.role || node.plmn?.role || 'home';
-		if (plmnRole === 'visited') {
-			visitedNodes.push(node);
+		if (node.position) {
+			originalPositions[node.id] = {
+				x: node.position.x,
+				y: node.position.y,
+			};
+		} else if (existingPositions[node.id]) {
+			originalPositions[node.id] = existingPositions[node.id];
 		} else {
-			homeNodes.push(node);
+			// Default position if none exists
+			originalPositions[node.id] = { x: 0, y: 0 };
 		}
 	});
 
-	// Function to organize nodes by type within a PLMN group
-	const organizeByType = (nodeGroup: any[], startY: number) => {
-		// Create groups by node type
-		const nodesByType: Record<string, any[]> = {};
-		nodeGroup.forEach((node) => {
-			const type = node.type || node.data?.type || 'DEFAULT';
-			if (!nodesByType[type]) {
-				nodesByType[type] = [];
-			}
-			nodesByType[type].push(node);
-		});
-
-		// Extract special node types for custom positioning
-		const seppNodes = nodesByType['SEPP'] || [];
-		const ueNodes = nodesByType['UE'] || [];
-		const packetrusherNodes = nodesByType['PacketRusher'] || [];
-
-		// Remove special nodes from regular processing
-		delete nodesByType['SEPP'];
-		delete nodesByType['UE'];
-		delete nodesByType['PacketRusher'];
-
-		// Order types to position related functions closer to SEPP
-		const typeOrder = ['AMF', 'SMF', 'UPF', 'AUSF', 'UDM', 'gNodeB'];
-		const sortedTypes = [...typeOrder, ...Object.keys(nodesByType).filter((type) => !typeOrder.includes(type))];
-
-		// Position each type group in a horizontal row pattern
-		let gridY = startY;
-		const typePadding = 250; // Padding between different types (vertical)
-		let maxX = 0; // Track the rightmost position
-
-		// First position SEPP nodes in the center-left
-		if (seppNodes.length > 0) {
-			const seppStartX = 600; // Center-left position
-			seppNodes.forEach((node, index) => {
-				positions[node.id] = {
-					x: seppStartX + index * (nodeWidth * 0.7), // Position close together
-					y: gridY + 100, // A bit below the starting Y
-				};
-				maxX = Math.max(maxX, seppStartX + index * (nodeWidth * 0.7) + nodeWidth);
-			});
-			gridY += nodeHeight + typePadding;
-		}
-
-		// Next position core network functions close to SEPP
-		sortedTypes.forEach((type) => {
-			if (!nodesByType[type]) return;
-
-			const typeNodes = nodesByType[type];
-			const nodesPerRow = Math.ceil(Math.sqrt(typeNodes.length) * 1.5); // More nodes per row for horizontal layout
-
-			// Start position depends on function type
-			let rowStartX = 400;
-
-			if (['AMF', 'SMF', 'UPF'].includes(type)) {
-				// Position key core network functions closer to SEPP
-				rowStartX = 300;
-			} else if (['AUSF', 'UDM'].includes(type)) {
-				// Position authentication functions in a middle distance
-				rowStartX = 500;
-			} else {
-				// Other functions slightly farther
-				rowStartX = 700;
-			}
-
-			typeNodes.forEach((node, index) => {
-				const col = index % nodesPerRow;
-				const row = Math.floor(index / nodesPerRow);
-
-				positions[node.id] = {
-					x: rowStartX + col * nodeWidth,
-					y: gridY + row * nodeHeight,
-				};
-				maxX = Math.max(maxX, rowStartX + col * nodeWidth + nodeWidth);
-			});
-
-			// Calculate row count and move down for next type
-			const rowCount = Math.ceil(typeNodes.length / nodesPerRow);
-			gridY += rowCount * nodeHeight + typePadding;
-		});
-
-		// Finally position UE and PacketRusher far to the right
-		// UE first
-		if (ueNodes.length > 0) {
-			const ueStartX = maxX + 300; // Far right
-			ueNodes.forEach((node, index) => {
-				positions[node.id] = {
-					x: ueStartX + index * nodeWidth,
-					y: startY + 200, // Higher up
-				};
-			});
-		}
-
-		// PacketRusher last
-		if (packetrusherNodes.length > 0) {
-			const prStartX = maxX + 300; // Far right
-			packetrusherNodes.forEach((node, index) => {
-				positions[node.id] = {
-					x: prStartX + index * nodeWidth,
-					y: startY + 600, // Lower down
-				};
-			});
-		}
-
-		return gridY; // Return the ending Y position
-	};
-
-	// Layout home network on the top
-	const homeEndY = organizeByType(homeNodes, 100);
-
-	// Layout visited network at the bottom with good separation
-	organizeByType(visitedNodes, homeEndY + groupPadding);
-
-	// Second pass: adjust positions based on connections for better layout
-	// This creates a bit of a force-directed effect
-	for (let i = 0; i < 3; i++) {
-		// Just a few iterations to keep it simple
-		connections.forEach((conn) => {
-			const source = conn.source;
-			const target = conn.target;
-
-			if (positions[source] && positions[target]) {
-				// Apply a slight attractive force between connected nodes
-				const sourcePos = positions[source];
-				const targetPos = positions[target];
-
-				// Check if this connection crosses between home and visited
-				const sourceNode = nodes.find((n) => n.id === source);
-				const targetNode = nodes.find((n) => n.id === target);
-
-				const sourcePlmn = sourceNode?.data?.plmn?.role || sourceNode?.plmn?.role || 'home';
-				const targetPlmn = targetNode?.data?.plmn?.role || targetNode?.plmn?.role || 'home';
-
-				// If connection is within the same PLMN, try to move nodes closer
-				if (sourcePlmn === targetPlmn) {
-					const dx = targetPos.x - sourcePos.x;
-					const dy = targetPos.y - sourcePos.y;
-					const distance = Math.sqrt(dx * dx + dy * dy);
-
-					// Only adjust if nodes are too far apart but keep minimum spacing
-					if (distance > nodeWidth * 6) {
-						const adjustmentFactor = 0.05; // Small adjustment to avoid chaotic movements
-
-						// Move nodes slightly closer together
-						positions[source] = {
-							x: sourcePos.x + dx * adjustmentFactor,
-							y: sourcePos.y + dy * adjustmentFactor,
-						};
-
-						positions[target] = {
-							x: targetPos.x - dx * adjustmentFactor,
-							y: targetPos.y - dy * adjustmentFactor,
-						};
-					}
-				}
-			}
-		});
+	// If no nodes have positions or force layout is true, apply the spread
+	if (Object.keys(originalPositions).length === 0 || forceLayout) {
+		return existingPositions;
 	}
 
-	return positions;
+	// Calculate the center of all original positions
+	let centerX = 0;
+	let centerY = 0;
+	let nodeCount = 0;
+
+	Object.values(originalPositions).forEach((pos) => {
+		centerX += pos.x;
+		centerY += pos.y;
+		nodeCount++;
+	});
+
+	if (nodeCount > 0) {
+		centerX /= nodeCount;
+		centerY /= nodeCount;
+	}
+
+	const spreadFactor = 3;
+
+	Object.entries(originalPositions).forEach(([id, pos]) => {
+		// Calculate vector from center to original position
+		const vectorX = pos.x - centerX;
+		const vectorY = pos.y - centerY;
+
+		// Apply the spread
+		newPositions[id] = {
+			x: centerX + vectorX * spreadFactor,
+			y: centerY + vectorY * spreadFactor,
+		};
+	});
+
+	// Return the spread positions
+	return newPositions;
+};
+
+// Helper function to apply spreading from center point
+const applySpreadToPositions = (
+	positions: Record<string, { x: number; y: number }>,
+	spreadFactor: number
+): Record<string, { x: number; y: number }> => {
+	const spreadPositions: Record<string, { x: number; y: number }> = {};
+	const nodeCount = Object.keys(positions).length;
+
+	if (nodeCount === 0) return positions;
+
+	// Calculate center point
+	let centerX = 0;
+	let centerY = 0;
+
+	Object.values(positions).forEach((pos) => {
+		centerX += pos.x;
+		centerY += pos.y;
+	});
+
+	centerX /= nodeCount;
+	centerY /= nodeCount;
+
+	// Spread nodes outward from center by spreadFactor
+	Object.entries(positions).forEach(([id, pos]) => {
+		const dx = pos.x - centerX;
+		const dy = pos.y - centerY;
+
+		spreadPositions[id] = {
+			x: centerX + dx * spreadFactor,
+			y: centerY + dy * spreadFactor,
+		};
+	});
+
+	return spreadPositions;
 };
 
 // Network Visualizer Component
@@ -273,6 +184,8 @@ export function NetworkVisualizer({
 	const [selectedNodeId, setSelectedNodeId] = useState<string | null>(selectedId || null);
 	// Track if we should apply auto layout
 	const [hasAppliedLayout, setHasAppliedLayout] = useState(false);
+	// State for protocol diagram modal
+	const [isProtocolModalOpen, setIsProtocolModalOpen] = useState(false);
 
 	const reactFlowWrapper = useRef<HTMLDivElement>(null);
 	const { zoomIn, zoomOut, fitView } = useReactFlow();
@@ -381,6 +294,24 @@ export function NetworkVisualizer({
 			const isConnectedToSelectedNode =
 				selectedNodeId && (conn.source === selectedNodeId || conn.target === selectedNodeId);
 
+			// Determine animation direction based on the selected node
+			let animationClass = '';
+			if (isConnectedToSelectedNode) {
+				if (conn.source === selectedNodeId) {
+					// Outgoing connection from selected node
+					animationClass = 'animated'; // Flow animation
+				} else {
+					// Incoming connection to selected node
+					animationClass = 'animated-pulse'; // Pulse animation
+				}
+			}
+
+			// Log to help debug animation issues
+			if (isConnectedToSelectedNode) {
+				console.log(`Edge ${conn.id} is connected to selected node ${selectedNodeId}`);
+				console.log(`Animation class: ${animationClass}`);
+			}
+
 			return {
 				...conn,
 				type: 'floating',
@@ -389,7 +320,8 @@ export function NetworkVisualizer({
 					sourceName: sourceNode?.name || sourceNode?.id || conn.source,
 					targetName: targetNode?.name || targetNode?.id || conn.target,
 					protocol,
-					animated: isConnectedToSelectedNode, // Animate edges connected to selected node
+					animated: isConnectedToSelectedNode,
+					animationClass,
 				},
 				markerEnd: {
 					type: MarkerType.ArrowClosed,
@@ -401,8 +333,16 @@ export function NetworkVisualizer({
 					zIndex: isConnectedToSelectedNode ? 5 : 0,
 					strokeWidth: isConnectedToSelectedNode ? 3 : 2,
 				},
+				selected: isConnectedToSelectedNode,
+				animated: true, // Ensure animated prop is passed to the edge
 			};
 		});
+
+		// Log all edges with animation classes
+		console.log(
+			'All edges with animation:',
+			enhancedEdges.filter((edge) => edge.data.animationClass)
+		);
 
 		setEdges(enhancedEdges as Edge[]);
 	}, [nodes, connections, networkFunctions, selectedNodeId]);
@@ -438,7 +378,6 @@ export function NetworkVisualizer({
 
 	// When nodes are dragged
 	const onNodeDragStop = useCallback((event: React.MouseEvent, node: Node, nodes: Node[]) => {
-		console.log('Node dragged:', node.id, node.position);
 		// Store the updated node positions
 		setNodes((prevNodes) => {
 			return prevNodes.map((prevNode) => {
@@ -528,6 +467,7 @@ export function NetworkVisualizer({
 				elementsSelectable={true}
 				defaultEdgeOptions={{
 					type: 'floating',
+					selectable: true,
 				}}>
 				<Background
 					variant={'dots' as BackgroundVariant}
@@ -566,8 +506,44 @@ export function NetworkVisualizer({
 						variant='ghost'>
 						Auto Layout
 					</Button>
+					<Button
+						onPress={() => {
+							// Log node positions to console for debugging
+							console.log(
+								'Node Positions:',
+								nodes.map((node) => ({
+									id: node.id,
+									type: node.type,
+									name: node.data?.name,
+									position: node.position,
+								}))
+							);
+						}}
+						title='Log Positions'
+						size='sm'
+						variant='ghost'>
+						Log Positions
+					</Button>
+				</div>
+
+				{/* Protocol Diagram Button */}
+				<div className='absolute top-3 right-3 z-10'>
+					<Button
+						onPress={() => setIsProtocolModalOpen(true)}
+						title='Show Protocol Diagram'
+						size='sm'
+						variant='solid'
+						className='bg-white dark:bg-gray-700 shadow'>
+						Protocol Diagram
+					</Button>
 				</div>
 			</ReactFlow>
+
+			{/* Protocol Diagram Modal */}
+			<ProtocolDiagramModal
+				isOpen={isProtocolModalOpen}
+				onClose={() => setIsProtocolModalOpen(false)}
+			/>
 		</div>
 	);
 }
