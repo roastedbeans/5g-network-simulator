@@ -1,4 +1,3 @@
-import { Card } from '@heroui/react';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -99,10 +98,10 @@ export default function Home() {
 
 function FeatureCard({ title, description, icon }: { title: string; description: string; icon: string }) {
 	return (
-		<Card className='bg-gray-50 dark:bg-gray-700 p-6 rounded-lg shadow-sm'>
+		<div className='bg-gray-50 dark:bg-gray-700 p-6 rounded-lg shadow-sm'>
 			<div className='text-4xl mb-4'>{icon}</div>
 			<h3 className='font-bold text-lg mb-2'>{title}</h3>
 			<p className='text-gray-600 dark:text-gray-300'>{description}</p>
-		</Card>
+		</div>
 	);
 }

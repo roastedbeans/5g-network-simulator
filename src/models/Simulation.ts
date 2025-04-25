@@ -6,7 +6,7 @@ const SimulationSchema = new Schema<Simulation>(
 		id: { type: String, required: true, unique: true },
 		name: { type: String, required: true },
 		description: { type: String },
-		networkFunctions: [{ type: String, ref: 'NetworkFunction' }],
+		networkFunctions: [{ type: String }], // Store NetworkFunction slugs
 		connections: [{ type: String, ref: 'Connection' }],
 		messages: [{ type: String, ref: 'Message' }],
 		status: {

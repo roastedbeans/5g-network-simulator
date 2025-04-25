@@ -1,199 +1,311 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import NetworkVisualizer from '@/components/network/NetworkVisualizer';
-import { AuthenticationFlowDiagram, PDUSessionEstablishmentDiagram } from '@/components/protocol/ProtocolDiagram';
+import { useState, useEffect, useCallback } from 'react';
+import { NetworkVisualizer } from '@/components/network/NetworkVisualizer';
 import { NetworkFunction, Connection, Message } from '@/types/network';
-import { v4 as uuidv4 } from 'uuid';
-import * as networkFunctionApi from '@/services/api/networkFunctionApi';
-import {
-	Button,
-	Card,
-	CardBody,
-	CardHeader,
-	Divider,
-	Dropdown,
-	DropdownItem,
-	DropdownMenu,
-	DropdownTrigger,
-} from '@heroui/react';
+import { Button, Card, CardHeader, CardBody, CardFooter, Badge } from '@heroui/react';
+import { type Edge, ReactFlowProvider, type Node } from '@xyflow/react';
 
-// Mock data for demonstration
-const initialNetworkFunctions: NetworkFunction[] = [
-	{
-		id: uuidv4(),
-		name: 'User Equipment',
-		type: 'UE',
-		status: 'active',
-		connections: [],
-		position: { x: 100, y: 300 },
-		messages: [],
-	},
-	{
-		id: uuidv4(),
-		name: 'gNodeB',
-		type: 'RAN',
-		status: 'active',
-		connections: [],
-		position: { x: 250, y: 300 },
-		messages: [],
-	},
-	{
-		id: uuidv4(),
-		name: 'AMF-1',
-		type: 'AMF',
-		status: 'active',
-		connections: [],
-		position: { x: 400, y: 200 },
-		messages: [],
-	},
-	{
-		id: uuidv4(),
-		name: 'SMF-1',
-		type: 'SMF',
-		status: 'active',
-		connections: [],
-		position: { x: 550, y: 200 },
-		messages: [],
-	},
-	{
-		id: uuidv4(),
-		name: 'UPF-1',
-		type: 'UPF',
-		status: 'active',
-		connections: [],
-		position: { x: 550, y: 350 },
-		messages: [],
-	},
-	{
-		id: uuidv4(),
-		name: 'AUSF-1',
-		type: 'AUSF',
-		status: 'active',
-		connections: [],
-		position: { x: 400, y: 100 },
-		messages: [],
-	},
-	{
-		id: uuidv4(),
-		name: 'UDM-1',
-		type: 'UDM',
-		status: 'active',
-		connections: [],
-		position: { x: 550, y: 100 },
-		messages: [],
-	},
-];
+// Mock data generator for testing when API fails
+const generateMockNetworkData = () => {
+	// Create mock MongoDB-style IDs
+	const generateMockId = () => {
+		return Math.random().toString(16).substring(2, 15) + Math.random().toString(16).substring(2, 15);
+	};
 
-// Create initial connections
-function setupInitialConnections(networkFunctions: NetworkFunction[]): Connection[] {
-	// Find network functions by type
-	const ue = networkFunctions.find((nf) => nf.type === 'UE');
-	const ran = networkFunctions.find((nf) => nf.type === 'RAN');
-	const amf = networkFunctions.find((nf) => nf.type === 'AMF');
-	const smf = networkFunctions.find((nf) => nf.type === 'SMF');
-	const upf = networkFunctions.find((nf) => nf.type === 'UPF');
-	const ausf = networkFunctions.find((nf) => nf.type === 'AUSF');
-	const udm = networkFunctions.find((nf) => nf.type === 'UDM');
+	// Create IDs for the network functions
+	const ueId = generateMockId();
+	const gnbId = generateMockId();
+	const amfId = generateMockId();
+	const smfId = generateMockId();
 
-	if (!ue || !ran || !amf || !smf || !upf || !ausf || !udm) return [];
+	// Define some network functions
+	const networkFunctions: NetworkFunction[] = [
+		{
+			id: ueId,
+			slug: 'ue',
+			name: 'UE',
+			type: 'UE',
+			plmn: { id: '208-093', name: 'Visited PLMN', role: 'visited' },
+			status: 'active',
+			connections: [],
+			position: { x: 100, y: 250 },
+		},
+		{
+			id: gnbId,
+			slug: 'gnb',
+			name: 'gNodeB',
+			type: 'gNodeB',
+			plmn: { id: '208-093', name: 'Visited PLMN', role: 'visited' },
+			status: 'active',
+			connections: [],
+			position: { x: 250, y: 250 },
+		},
+		{
+			id: amfId,
+			slug: 'amf',
+			name: 'AMF',
+			type: 'AMF',
+			plmn: { id: '208-093', name: 'Visited PLMN', role: 'visited' },
+			status: 'active',
+			connections: [],
+			position: { x: 400, y: 100 },
+		},
+		{
+			id: smfId,
+			slug: 'smf',
+			name: 'SMF',
+			type: 'SMF',
+			plmn: { id: '208-093', name: 'Visited PLMN', role: 'visited' },
+			status: 'active',
+			connections: [],
+			position: { x: 400, y: 400 },
+		},
+	];
 
+	// Define connections between functions
 	const connections: Connection[] = [
 		{
-			id: uuidv4(),
-			source: ue.id,
-			target: ran.id,
+			id: generateMockId(),
+			source: ueId,
+			target: gnbId,
 			protocol: 'N1',
 			status: 'active',
 		},
 		{
-			id: uuidv4(),
-			source: ran.id,
-			target: amf.id,
+			id: generateMockId(),
+			source: gnbId,
+			target: amfId,
 			protocol: 'N2',
 			status: 'active',
 		},
 		{
-			id: uuidv4(),
-			source: ran.id,
-			target: upf.id,
-			protocol: 'N3',
-			status: 'active',
-		},
-		{
-			id: uuidv4(),
-			source: amf.id,
-			target: smf.id,
+			id: generateMockId(),
+			source: amfId,
+			target: smfId,
 			protocol: 'N11',
-			status: 'active',
-		},
-		{
-			id: uuidv4(),
-			source: smf.id,
-			target: upf.id,
-			protocol: 'N4',
-			status: 'active',
-		},
-		{
-			id: uuidv4(),
-			source: amf.id,
-			target: ausf.id,
-			protocol: 'N8',
-			status: 'active',
-		},
-		{
-			id: uuidv4(),
-			source: ausf.id,
-			target: udm.id,
-			protocol: 'N8',
 			status: 'active',
 		},
 	];
 
-	// Update the connections array for each network function
-	networkFunctions.forEach((nf) => {
-		nf.connections = connections
-			.filter((conn) => conn.source === nf.id || conn.target === nf.id)
-			.map((conn) => conn.id);
+	// Add connections to the network functions
+	connections.forEach((conn) => {
+		// Find source network function and add connection
+		const sourceNF = networkFunctions.find((nf) => nf.id === conn.source);
+		if (sourceNF) {
+			sourceNF.connections.push(conn);
+		}
+
+		// Find target network function and add connection
+		const targetNF = networkFunctions.find((nf) => nf.id === conn.target);
+		if (targetNF) {
+			targetNF.connections.push(conn);
+		}
 	});
 
-	return connections;
-}
+	return { functions: networkFunctions, connections };
+};
 
 export default function SimulatorPage() {
 	const [networkFunctions, setNetworkFunctions] = useState<NetworkFunction[]>([]);
 	const [connections, setConnections] = useState<Connection[]>([]);
 	const [messages, setMessages] = useState<Message[]>([]);
-	const [selectedTab, setSelectedTab] = useState<'network' | 'auth' | 'session'>('network');
 	const [selectedId, setSelectedId] = useState<string | undefined>(undefined);
-	const [simulationRunning, setSimulationRunning] = useState(false);
+	const [isLoading, setIsLoading] = useState(false);
+	const [useMockData, setUseMockData] = useState(false);
+	const [statusMessage, setStatusMessage] = useState<{ text: string; type: 'info' | 'success' | 'error' | null }>({
+		text: '',
+		type: null,
+	});
 
-	// Initialize with mock data
+	// Try to load the network topology on initial render
 	useEffect(() => {
-		// First try to load from API
-		const loadNetworkFunctions = async () => {
+		async function loadTopology() {
+			setIsLoading(true);
 			try {
-				const apiNetworkFunctions = await networkFunctionApi.getAllNetworkFunctions();
+				console.log('Fetching topology from API...');
+				const response = await fetch('/api/simulator/topology');
+				console.log('API response status:', response.status);
 
-				// If we got network functions from the API, use those
-				if (apiNetworkFunctions && apiNetworkFunctions.length > 0) {
-					setNetworkFunctions(apiNetworkFunctions);
-					// You would need to load connections separately here too
-					return;
+				if (response.ok) {
+					const topologyData = await response.json();
+					console.log('API response data:', topologyData);
+
+					if (topologyData.success && topologyData.data) {
+						// Check if data is properly structured
+						if (
+							topologyData.data.networkFunctions &&
+							Array.isArray(topologyData.data.networkFunctions) &&
+							topologyData.data.networkFunctions.length > 0
+						) {
+							console.log('Setting network functions:', topologyData.data.networkFunctions.length);
+							// Check if network functions have connections
+							const functionWithConnections = topologyData.data.networkFunctions.filter(
+								(func: NetworkFunction) => func.connections && func.connections.length > 0
+							);
+							console.log(
+								`Functions with connections: ${functionWithConnections.length}/${topologyData.data.networkFunctions.length}`
+							);
+
+							if (functionWithConnections.length > 0) {
+								console.log(
+									'Sample function connections:',
+									JSON.stringify(functionWithConnections[0].connections.slice(0, 2))
+								);
+							}
+
+							setNetworkFunctions(topologyData.data.networkFunctions);
+
+							if (topologyData.data.connections && Array.isArray(topologyData.data.connections)) {
+								console.log('Setting connections:', topologyData.data.connections.length);
+								if (topologyData.data.connections.length > 0) {
+									console.log('Sample connection data:', JSON.stringify(topologyData.data.connections[0]));
+								}
+								setConnections(topologyData.data.connections);
+							} else {
+								console.error('Invalid or empty connections array in API response');
+								setConnections([]);
+							}
+						} else {
+							console.warn('No network functions from API, using mock data');
+							const mockData = generateMockNetworkData();
+							setNetworkFunctions(mockData.functions);
+							setConnections(mockData.connections);
+							setUseMockData(true);
+						}
+					} else {
+						console.error('API response not successful or missing data, using mock data');
+						const mockData = generateMockNetworkData();
+						setNetworkFunctions(mockData.functions);
+						setConnections(mockData.connections);
+						setUseMockData(true);
+					}
+				} else {
+					console.error('Failed to fetch topology, using mock data');
+					const mockData = generateMockNetworkData();
+					setNetworkFunctions(mockData.functions);
+					setConnections(mockData.connections);
+					setUseMockData(true);
 				}
 			} catch (error) {
-				console.warn('Could not load from API, using mock data instead:', error);
+				console.error('Error loading topology data:', error);
+				console.log('Using mock data instead');
+				const mockData = generateMockNetworkData();
+				setNetworkFunctions(mockData.functions);
+				setConnections(mockData.connections);
+				setUseMockData(true);
+			} finally {
+				setIsLoading(false);
+			}
+		}
+
+		loadTopology();
+	}, []);
+
+	console.log('topology data', networkFunctions, connections);
+
+	// Setup 5G Roaming Scenario
+	const setupRoamingScenario = async () => {
+		setIsLoading(true);
+		// Clear status after 5 seconds
+		const clearStatus = () =>
+			setTimeout(() => {
+				setStatusMessage({ text: '', type: null });
+			}, 5000);
+
+		try {
+			// Clear any previous state
+			setSelectedId(undefined);
+			setMessages([]);
+
+			// Show status message
+			setStatusMessage({
+				text: 'Initializing network functions and connections...',
+				type: 'info',
+			});
+
+			const response = await fetch('/api/simulator/setup-roaming', {
+				method: 'POST',
+			});
+
+			if (!response.ok) {
+				throw new Error(`Failed to set up roaming scenario: ${response.statusText}`);
 			}
 
-			// Fall back to mock data if API fails or returns empty
-			const initialNFs = [...initialNetworkFunctions];
-			setNetworkFunctions(initialNFs);
-			const initialConns = setupInitialConnections(initialNFs);
-			setConnections(initialConns);
-		};
+			// Fetch the updated network topology
+			const topologyResponse = await fetch('/api/simulator/topology');
 
-		loadNetworkFunctions();
-	}, []);
+			if (!topologyResponse.ok) {
+				throw new Error(`Failed to fetch network topology: ${topologyResponse.statusText}`);
+			}
+
+			const topologyData = await topologyResponse.json();
+			console.log('Topology data received:', topologyData);
+
+			if (topologyData.success && topologyData.data) {
+				// Perform basic validation before setting state
+				if (!topologyData.data.networkFunctions || !Array.isArray(topologyData.data.networkFunctions)) {
+					throw new Error('Invalid or missing network functions in response');
+				}
+
+				if (!topologyData.data.connections || !Array.isArray(topologyData.data.connections)) {
+					console.warn('No connections in topology response');
+				}
+
+				// Log connection details for debugging
+				console.log(`Setting ${topologyData.data.networkFunctions.length} network functions`);
+				console.log(`Setting ${topologyData.data.connections?.length || 0} connections`);
+
+				if (topologyData.data.connections && topologyData.data.connections.length > 0) {
+					console.log('Sample connection:', topologyData.data.connections[0]);
+				}
+
+				// Check if network functions have connections
+				const functionsWithConnections = topologyData.data.networkFunctions.filter(
+					(func: NetworkFunction) => func.connections && func.connections.length > 0
+				);
+
+				console.log(
+					`Functions with connections: ${functionsWithConnections.length}/${topologyData.data.networkFunctions.length}`
+				);
+
+				if (functionsWithConnections.length > 0) {
+					const sampleFunc = functionsWithConnections[0];
+					console.log(`Sample function ${sampleFunc.name} has ${sampleFunc.connections.length} connections`);
+					if (sampleFunc.connections.length > 0) {
+						console.log('Sample function connections:', JSON.stringify(sampleFunc.connections.slice(0, 2)));
+					}
+				}
+
+				setNetworkFunctions(topologyData.data.networkFunctions);
+				setConnections(topologyData.data.connections);
+
+				// Success message
+				setStatusMessage({
+					text: `Created ${topologyData.data.networkFunctions.length} network functions and ${
+						topologyData.data.connections?.length || 0
+					} connections`,
+					type: 'success',
+				});
+
+				clearStatus();
+			} else {
+				throw new Error('Invalid response format from topology API');
+			}
+		} catch (error) {
+			console.error('Error setting up roaming scenario:', error);
+
+			// Error message
+			setStatusMessage({
+				text: error instanceof Error ? error.message : 'Unknown error occurred',
+				type: 'error',
+			});
+
+			clearStatus();
+		} finally {
+			setIsLoading(false);
+		}
+	};
 
 	// Handle network function selection
 	const handleNetworkFunctionClick = (nf: NetworkFunction) => {
@@ -207,423 +319,180 @@ export default function SimulatorPage() {
 		console.log('Selected connection:', conn);
 	};
 
-	// Simulate a message exchange (e.g., authentication)
-	const simulateAuthentication = () => {
-		if (simulationRunning) return;
-		setSimulationRunning(true);
-
-		const ue = networkFunctions.find((nf) => nf.type === 'UE');
-		const amf = networkFunctions.find((nf) => nf.type === 'AMF');
-		const ausf = networkFunctions.find((nf) => nf.type === 'AUSF');
-		const udm = networkFunctions.find((nf) => nf.type === 'UDM');
-
-		if (!ue || !amf || !ausf || !udm) {
-			console.error('Required network functions not found');
-			setSimulationRunning(false);
-			return;
-		}
-
-		// Clear previous messages
-		setMessages([]);
-
-		// Step 1: UE -> AMF Authentication Request
-		setTimeout(() => {
-			const msg1: Message = {
-				id: uuidv4(),
-				type: 'REQUEST',
-				source: ue.id,
-				destination: amf.id,
-				protocol: 'N1',
-				payload: { type: 'Authentication Request', supi: 'imsi-123456789012345' },
-				timestamp: new Date(),
+	// Process connections and networkFunctions for visualization
+	// This function transforms the raw data into a format suitable for ReactFlow
+	const processNetworkData = useCallback(() => {
+		// Process network functions for visualization
+		const processedNodes: Node[] = networkFunctions.map((nf) => {
+			// Create a properly formatted node for ReactFlow
+			return {
+				id: nf.id,
+				position: nf.position || { x: 0, y: 0 },
+				type: 'networkFunction', // Use our custom node component
+				data: {
+					...nf,
+					// These properties will be extracted in the NetworkFunctionNode component
+				},
+				// Additional ReactFlow node properties can be added here
 			};
-			setMessages((prev) => [...prev, msg1]);
+		});
 
-			// Step 2: AMF -> AUSF
-			setTimeout(() => {
-				const msg2: Message = {
-					id: uuidv4(),
-					type: 'REQUEST',
-					source: amf.id,
-					destination: ausf.id,
-					protocol: 'N8',
-					payload: { type: 'Authentication Request', supi: 'imsi-123456789012345' },
-					timestamp: new Date(),
-				};
-				setMessages((prev) => [...prev, msg2]);
+		// Process connections for visualization
+		const processedEdges: Edge[] = connections.map((conn) => {
+			// Try to find which network functions this connection links
+			const sourceNF = networkFunctions.find((nf) => nf.id === conn.source);
+			const targetNF = networkFunctions.find((nf) => nf.id === conn.target);
 
-				// Step 3: AUSF -> UDM
-				setTimeout(() => {
-					const msg3: Message = {
-						id: uuidv4(),
-						type: 'REQUEST',
-						source: ausf.id,
-						destination: udm.id,
-						protocol: 'N8',
-						payload: { type: 'Authentication Info Request', supi: 'imsi-123456789012345' },
-						timestamp: new Date(),
-					};
-					setMessages((prev) => [...prev, msg3]);
+			// Determine a meaningful connection label - store as string to avoid type conflicts
+			const displayLabel: string = (() => {
+				if (sourceNF && targetNF) {
+					const sourceName = sourceNF.name || sourceNF.type;
+					const targetName = targetNF.name || targetNF.type;
+					return `${sourceName} → ${targetName}`;
+				}
+				return conn.protocol || 'Connection';
+			})();
 
-					// Step 4: UDM -> AUSF
-					setTimeout(() => {
-						const msg4: Message = {
-							id: uuidv4(),
-							type: 'RESPONSE',
-							source: udm.id,
-							destination: ausf.id,
-							protocol: 'N8',
-							payload: { type: 'Authentication Info Response', vectors: { rand: '123', autn: '456' } },
-							timestamp: new Date(),
-						};
-						setMessages((prev) => [...prev, msg4]);
+			// Determine appropriate source and target handles based on network function types
+			// This helps position the edges correctly between nodes
+			let sourceHandle = undefined;
+			let targetHandle = undefined;
 
-						// Step 5: AUSF -> AMF
-						setTimeout(() => {
-							const msg5: Message = {
-								id: uuidv4(),
-								type: 'RESPONSE',
-								source: ausf.id,
-								destination: amf.id,
-								protocol: 'N8',
-								payload: { type: 'Authentication Response', vectors: { rand: '123', autn: '456' } },
-								timestamp: new Date(),
-							};
-							setMessages((prev) => [...prev, msg5]);
+			if (sourceNF && targetNF) {
+				// Determine relative positions to decide which handles to use
+				// This is a simplified approach - you might need to adjust based on your layout
+				if (sourceNF.position && targetNF.position) {
+					const sourcePos = sourceNF.position;
+					const targetPos = targetNF.position;
 
-							// Step 6: AMF -> UE
-							setTimeout(() => {
-								const msg6: Message = {
-									id: uuidv4(),
-									type: 'REQUEST',
-									source: amf.id,
-									destination: ue.id,
-									protocol: 'N1',
-									payload: { type: 'Authentication Challenge', rand: '123', autn: '456' },
-									timestamp: new Date(),
-								};
-								setMessages((prev) => [...prev, msg6]);
+					// Horizontal positioning
+					if (Math.abs(sourcePos.x - targetPos.x) > Math.abs(sourcePos.y - targetPos.y)) {
+						// Nodes are more horizontally aligned than vertically
+						if (sourcePos.x < targetPos.x) {
+							// Source is to the left of target
+							sourceHandle = `${conn.source}`;
+							targetHandle = `${conn.target}`;
+						} else {
+							// Source is to the right of target
+							sourceHandle = `${conn.source}`;
+							targetHandle = `${conn.target}`;
+						}
+					} else {
+						// Nodes are more vertically aligned than horizontally
+						if (sourcePos.y < targetPos.y) {
+							// Source is above target
+							sourceHandle = `${conn.source}`;
+							targetHandle = `${conn.target}`;
+						} else {
+							// Source is below target
+							sourceHandle = `${conn.source}`;
+							targetHandle = `${conn.target}`;
+						}
+					}
+				}
+			}
 
-								// Step 7: UE -> AMF
-								setTimeout(() => {
-									const msg7: Message = {
-										id: uuidv4(),
-										type: 'RESPONSE',
-										source: ue.id,
-										destination: amf.id,
-										protocol: 'N1',
-										payload: { type: 'Authentication Response', res: '789' },
-										timestamp: new Date(),
-									};
-									setMessages((prev) => [...prev, msg7]);
-
-									// Step 8: AMF -> AUSF
-									setTimeout(() => {
-										const msg8: Message = {
-											id: uuidv4(),
-											type: 'REQUEST',
-											source: amf.id,
-											destination: ausf.id,
-											protocol: 'N8',
-											payload: { type: 'Confirmation Request', res: '789' },
-											timestamp: new Date(),
-										};
-										setMessages((prev) => [...prev, msg8]);
-
-										// Step 9: AUSF -> AMF
-										setTimeout(() => {
-											const msg9: Message = {
-												id: uuidv4(),
-												type: 'RESPONSE',
-												source: ausf.id,
-												destination: amf.id,
-												protocol: 'N8',
-												payload: { type: 'Confirmation Response', result: 'SUCCESS' },
-												timestamp: new Date(),
-											};
-											setMessages((prev) => [...prev, msg9]);
-
-											// Step 10: AMF -> UE
-											setTimeout(() => {
-												const msg10: Message = {
-													id: uuidv4(),
-													type: 'RESPONSE',
-													source: amf.id,
-													destination: ue.id,
-													protocol: 'N1',
-													payload: { type: 'Authentication Success' },
-													timestamp: new Date(),
-												};
-												setMessages((prev) => [...prev, msg10]);
-												setSimulationRunning(false);
-											}, 1000);
-										}, 1000);
-									}, 1000);
-								}, 1000);
-							}, 1000);
-						}, 1000);
-					}, 1000);
-				}, 1000);
-			}, 1000);
-		}, 500);
-	};
-
-	// Simulate PDU session establishment
-	const simulatePDUSessionEstablishment = () => {
-		if (simulationRunning) return;
-		setSimulationRunning(true);
-
-		const ue = networkFunctions.find((nf) => nf.type === 'UE');
-		const amf = networkFunctions.find((nf) => nf.type === 'AMF');
-		const smf = networkFunctions.find((nf) => nf.type === 'SMF');
-		const upf = networkFunctions.find((nf) => nf.type === 'UPF');
-
-		if (!ue || !amf || !smf || !upf) {
-			console.error('Required network functions not found');
-			setSimulationRunning(false);
-			return;
-		}
-
-		// Clear previous messages
-		setMessages([]);
-
-		// Step 1: UE -> AMF PDU Session Establishment Request
-		setTimeout(() => {
-			const msg1: Message = {
-				id: uuidv4(),
-				type: 'REQUEST',
-				source: ue.id,
-				destination: amf.id,
-				protocol: 'N1',
-				payload: { type: 'PDU Session Establishment Request', pduSessionId: 1, dnn: 'internet' },
-				timestamp: new Date(),
+			// Create a properly formatted edge for ReactFlow
+			return {
+				id: conn.id,
+				protocol: conn.protocol,
+				status: conn.status,
+				source: conn.source,
+				target: conn.target,
+				type: 'floating',
+				displayLabel, // Use displayLabel property instead of label
+				// Use calculated handles or fall back to any that might be in the data
+				sourceHandle: sourceHandle || undefined,
+				targetHandle: targetHandle || undefined,
+				sourceName: sourceNF?.name,
+				targetName: targetNF?.name,
 			};
-			setMessages((prev) => [...prev, msg1]);
+		});
 
-			// Step 2: AMF -> SMF Create SM Context Request
-			setTimeout(() => {
-				const msg2: Message = {
-					id: uuidv4(),
-					type: 'REQUEST',
-					source: amf.id,
-					destination: smf.id,
-					protocol: 'N11',
-					payload: { type: 'Create SM Context Request', pduSessionId: 1, dnn: 'internet' },
-					timestamp: new Date(),
-				};
-				setMessages((prev) => [...prev, msg2]);
+		return { processedNodes, processedEdges };
+	}, [networkFunctions, connections]);
 
-				// Step 3: SMF -> UPF N4 Session Establishment
-				setTimeout(() => {
-					const msg3: Message = {
-						id: uuidv4(),
-						type: 'REQUEST',
-						source: smf.id,
-						destination: upf.id,
-						protocol: 'N4',
-						payload: { type: 'N4 Session Establishment', seid: 100, farId: 1 },
-						timestamp: new Date(),
-					};
-					setMessages((prev) => [...prev, msg3]);
+	// Use the processed data for rendering
+	const { processedNodes, processedEdges } = processNetworkData();
 
-					// Step 4: UPF -> SMF N4 Session Establishment Response
-					setTimeout(() => {
-						const msg4: Message = {
-							id: uuidv4(),
-							type: 'RESPONSE',
-							source: upf.id,
-							destination: smf.id,
-							protocol: 'N4',
-							payload: { type: 'N4 Session Establishment Response', seid: 200 },
-							timestamp: new Date(),
-						};
-						setMessages((prev) => [...prev, msg4]);
-
-						// Step 5: SMF -> AMF Create SM Context Response
-						setTimeout(() => {
-							const msg5: Message = {
-								id: uuidv4(),
-								type: 'RESPONSE',
-								source: smf.id,
-								destination: amf.id,
-								protocol: 'N11',
-								payload: { type: 'Create SM Context Response', pduSessionId: 1 },
-								timestamp: new Date(),
-							};
-							setMessages((prev) => [...prev, msg5]);
-
-							// Step 6: AMF -> UE PDU Session Establishment Accept
-							setTimeout(() => {
-								const msg6: Message = {
-									id: uuidv4(),
-									type: 'RESPONSE',
-									source: amf.id,
-									destination: ue.id,
-									protocol: 'N1',
-									payload: { type: 'PDU Session Establishment Accept', pduSessionId: 1, qosFlowId: 1 },
-									timestamp: new Date(),
-								};
-								setMessages((prev) => [...prev, msg6]);
-								setSimulationRunning(false);
-							}, 1000);
-						}, 1000);
-					}, 1000);
-				}, 1000);
-			}, 1000);
-		}, 500);
+	// Helper function to provide protocol descriptions
+	const getProtocolDescription = (protocol?: string) => {
+		switch (protocol) {
+			case 'N1':
+				return 'UE to AMF interface for NAS signaling';
+			case 'N2':
+				return 'gNodeB to AMF interface for control plane messages';
+			case 'N3':
+				return 'gNodeB to UPF interface for user plane data';
+			case 'N4':
+				return 'SMF to UPF interface for user plane session management';
+			case 'N6':
+				return 'UPF to Data Network interface';
+			case 'N8':
+				return 'AMF to UDM interface for authentication and subscription data';
+			case 'N9':
+				return 'UPF to UPF interface in home-routed roaming scenarios';
+			case 'N10':
+				return 'SMF to SMF interface for session management in roaming';
+			case 'N11':
+				return 'AMF to SMF interface for session management requests';
+			case 'N12':
+				return 'AMF to AUSF interface for authentication';
+			case 'N13':
+				return 'UDM to AUSF interface for authentication data';
+			case 'N14':
+				return 'AMF to AMF interface in roaming scenarios';
+			case 'N15':
+				return 'AMF to PCF interface for policy control';
+			case 'N32':
+				return 'SEPP to SEPP interface for secure inter-PLMN communication';
+			default:
+				return 'Network interface between 5G core network functions';
+		}
 	};
 
 	return (
-		<div className='w-full max-h-screen h-full flex flex-col'>
-			<div className='flex-1 flex overflow-y-auto max-h-screen'>
-				{/* Left panel for controls */}
-				<div className='max-w-sm w-full p-8 flex flex-col gap-4'>
-					<h1 className='text-2xl font-bold text-center'>5G Network Simulator</h1>
-					<Divider />
-					<div className='flex flex-col gap-4'>
-						<h2 className='font-semibold'>Simulation Control</h2>
-						<div className='flex items-center gap-2'>
-							<h4 className='font-semibold'>Status</h4>
-							<div className='flex items-center'>
-								<div
-									className={` w-3 h-3 rounded-full mr-2 ${simulationRunning ? 'bg-green-500' : 'bg-gray-400'}`}></div>
-								<span>{simulationRunning ? 'Simulation Running' : 'Ready'}</span>
-							</div>
+		<div className='flex flex-col h-screen p-4 bg-gray-50 dark:bg-gray-900'>
+			<div className='flex justify-between items-center mb-4'>
+				<h1 className='text-2xl font-bold'>5G Network Simulator - Roaming</h1>
+				<div className='flex space-x-2 items-center'>
+					{statusMessage.type && (
+						<div
+							className={`px-3 py-1.5 text-sm rounded-md ${
+								statusMessage.type === 'success'
+									? 'bg-green-100 text-green-800'
+									: statusMessage.type === 'error'
+									? 'bg-red-100 text-red-800'
+									: 'bg-blue-100 text-blue-800'
+							}`}>
+							{statusMessage.text}
 						</div>
-					</div>
+					)}
 					<Button
-						variant='solid'
-						onPress={() => setSelectedTab('network')}>
-						Network View
-					</Button>
-
-					<Button
-						variant='solid'
 						color='primary'
-						onPress={() => {
-							setSelectedTab('auth');
-							simulateAuthentication();
-						}}
-						disabled={simulationRunning}>
-						Authentication Flow
+						onPress={setupRoamingScenario}
+						disabled={isLoading}>
+						{isLoading ? 'Setting up...' : 'Setup Roaming Scenario'}
 					</Button>
-
-					<Button
-						variant='solid'
-						color='primary'
-						onPress={() => {
-							setSelectedTab('session');
-							simulatePDUSessionEstablishment();
-						}}
-						disabled={simulationRunning}>
-						PDU Session Establishment
-					</Button>
-					<Card
-						fullWidth
-						className='p-2'>
-						<CardHeader>
-							<h2 className='font-semibold'>Message Log</h2>
-						</CardHeader>
-						<CardBody>
-							<div className='overflow-y-auto text-xs'>
-								{messages.map((message) => (
-									<div
-										key={message.id}
-										className='mb-1'>
-										<span className='text-gray-500'>{new Date(message.timestamp).toLocaleTimeString()}</span>{' '}
-										<span className='font-semibold'>{message.protocol}</span>{' '}
-										<span
-											className={`px-1 rounded ${
-												message.type === 'REQUEST'
-													? 'bg-blue-100'
-													: message.type === 'RESPONSE'
-													? 'bg-green-100'
-													: 'bg-red-100'
-											}`}>
-											{message.type}
-										</span>{' '}
-										<span>
-											{networkFunctions.find((nf) => nf.id === message.source)?.name || message.source}
-											{' → '}
-											{networkFunctions.find((nf) => nf.id === message.destination)?.name || message.destination}
-										</span>{' '}
-										<span className='text-gray-600'>
-											{typeof message.payload === 'object' && message.payload !== null
-												? (message.payload as any).type
-												: String(message.payload)}
-										</span>
-									</div>
-								))}
-								{messages.length === 0 && <div className='text-gray-400'>No messages yet</div>}
-							</div>
-						</CardBody>
-					</Card>
+					{useMockData && (
+						<div className='px-3 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-md flex items-center'>
+							Using Mock Data (DB not connected)
+						</div>
+					)}
 				</div>
+			</div>
 
-				{/* Main content area */}
-				<div className='flex-1 flex flex-col relative overflow-y-auto'>
-					{/* Tab content */}
-					<div className='flex-1 p-8'>
-						{selectedTab === 'network' && (
-							<Card className='w-full h-full flex gap-4 relative'>
-								<NetworkVisualizer
-									networkFunctions={networkFunctions}
-									connections={connections}
-									messages={messages}
-									onNetworkFunctionClick={handleNetworkFunctionClick}
-									onConnectionClick={handleConnectionClick}
-									selectedId={selectedId}
-								/>
-							</Card>
-						)}
-
-						{selectedTab === 'auth' && (
-							<div className='w-full min-h-screen flex flex-col gap-4'>
-								<Card className='h-1/2 relative'>
-									<NetworkVisualizer
-										networkFunctions={networkFunctions}
-										connections={connections}
-										messages={messages}
-										onNetworkFunctionClick={handleNetworkFunctionClick}
-										onConnectionClick={handleConnectionClick}
-										selectedId={selectedId}
-									/>
-								</Card>
-								<Card className='h-1/2 p-4 bg-white overflow-auto'>
-									<CardHeader>
-										<h2 className='font-semibold mb-4'>Authentication Flow</h2>
-									</CardHeader>
-									<CardBody className='relative'>
-										<AuthenticationFlowDiagram />
-									</CardBody>
-								</Card>
-							</div>
-						)}
-
-						{selectedTab === 'session' && (
-							<div className='w-full min-h-screen flex flex-col gap-4'>
-								<Card className='h-1/2 relative'>
-									<NetworkVisualizer
-										networkFunctions={networkFunctions}
-										connections={connections}
-										messages={messages}
-										onNetworkFunctionClick={handleNetworkFunctionClick}
-										onConnectionClick={handleConnectionClick}
-										selectedId={selectedId}
-									/>
-								</Card>
-								<Card className='h-1/2 p-4'>
-									<CardHeader>
-										<h2 className='font-semibold mb-4'>PDU Session Establishment</h2>
-									</CardHeader>
-									<CardBody>
-										<PDUSessionEstablishmentDiagram />
-									</CardBody>
-								</Card>
-							</div>
-						)}
-					</div>
-				</div>
+			<div className='flex-1 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 w-full'>
+				<ReactFlowProvider>
+					<NetworkVisualizer
+						networkFunctions={processedNodes}
+						connections={processedEdges}
+						messages={messages}
+						onNetworkFunctionClick={handleNetworkFunctionClick}
+						onConnectionClick={handleConnectionClick}
+						selectedId={selectedId}
+					/>
+				</ReactFlowProvider>
 			</div>
 		</div>
 	);

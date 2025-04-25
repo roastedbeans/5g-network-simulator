@@ -1,14 +1,27 @@
-import mongoose, { Schema, model, Model, models } from 'mongoose';
-import { Connection } from '@/types/network';
+import mongoose, { Schema, Document, Model } from 'mongoose';
+import { Connection as IConnection, ProtocolType } from '@/types/network';
 
-const ConnectionSchema = new Schema<Connection>(
+const ConnectionSchema = new Schema<IConnection & Document>(
 	{
-		id: { type: String, required: true, unique: true },
-		source: { type: String, ref: 'NetworkFunction', required: true },
-		target: { type: String, ref: 'NetworkFunction', required: true },
+		id: {
+			type: String,
+			default: function (this: any) {
+				return this._id ? this._id.toString() : null;
+			},
+		},
+		source: {
+			type: String, // Use the slug of NetworkFunction
+			required: true,
+			index: true,
+		},
+		target: {
+			type: String, // Use the slug of NetworkFunction
+			required: true,
+			index: true,
+		},
 		protocol: {
 			type: String,
-			enum: ['N1', 'N2', 'N3', 'N4', 'N6', 'N8', 'N11'],
+			enum: ['N1', 'N2', 'N3', 'N4', 'N6', 'N8', 'N9', 'N10', 'N11', 'N12', 'N13', 'N14', 'N15', 'N32'],
 			required: true,
 		},
 		status: {
@@ -16,22 +29,70 @@ const ConnectionSchema = new Schema<Connection>(
 			enum: ['active', 'inactive', 'error'],
 			default: 'inactive',
 		},
-		latency: { type: Number },
-		bandwidth: { type: Number },
+		// Store source and target names to avoid additional lookups
+		sourceName: {
+			type: String,
+			required: false,
+		},
+		targetName: {
+			type: String,
+			required: false,
+		},
+		// Optional metadata
+		label: {
+			type: String,
+		},
 	},
 	{ timestamps: true }
 );
 
-// Fix for client components in Next.js
-// Only create the model on the server side
-let ConnectionModel: Model<Connection>;
+// Add middleware to auto-populate sourceName and targetName when saving
+ConnectionSchema.pre('save', async function (next) {
+	// Only update if sourceName or targetName is missing
+	if (!this.sourceName || !this.targetName) {
+		try {
+			// This assumes NetworkFunction model is available and has the expected structure
+			const NetworkFunction = mongoose.model('NetworkFunction');
 
+			// Find source and target network functions by slug
+			const [sourceNF, targetNF] = await Promise.all([
+				NetworkFunction.findOne({ slug: this.source }).select('name'),
+				NetworkFunction.findOne({ slug: this.target }).select('name'),
+			]);
+
+			// Update names if found
+			if (sourceNF && !this.sourceName) {
+				this.sourceName = sourceNF.name;
+			}
+
+			if (targetNF && !this.targetName) {
+				this.targetName = targetNF.name;
+			}
+
+			next();
+		} catch (error) {
+			console.error('Error populating connection names:', error);
+			next();
+		}
+	} else {
+		next();
+	}
+});
+
+// Add a compound index for source and target for efficient lookups
+ConnectionSchema.index({ source: 1, target: 1 });
+
+// Fix for client components in Next.js
+let ConnectionModel: Model<IConnection & Document>;
+
+// Only create the model on the server side
 if (typeof window === 'undefined') {
 	// We're on the server
-	ConnectionModel = (models.Connection as Model<Connection>) || model<Connection>('Connection', ConnectionSchema);
+	ConnectionModel =
+		mongoose.models.Connection || mongoose.model<IConnection & Document>('Connection', ConnectionSchema);
 } else {
-	// We're on the client - provide a mock or minimal implementation
-	ConnectionModel = {} as Model<Connection>;
+	// We're on the client - provide a minimal implementation
+	ConnectionModel = {} as Model<IConnection & Document>;
 }
 
 export default ConnectionModel;

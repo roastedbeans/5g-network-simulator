@@ -7,16 +7,16 @@ import NetworkFunctionModel from '@/models/NetworkFunction';
  * Create a new connection between two network functions
  */
 export async function createConnection(
-	sourceId: string,
-	targetId: string,
+	sourceSlug: string,
+	targetSlug: string,
 	protocol: ProtocolType,
 	latency?: number,
 	bandwidth?: number
 ): Promise<Connection> {
 	// Validate that both network functions exist
 	const [source, target] = await Promise.all([
-		NetworkFunctionModel.findOne({ id: sourceId }),
-		NetworkFunctionModel.findOne({ id: targetId }),
+		NetworkFunctionModel.findOne({ slug: sourceSlug }),
+		NetworkFunctionModel.findOne({ slug: targetSlug }),
 	]);
 
 	if (!source || !target) {
@@ -25,19 +25,34 @@ export async function createConnection(
 
 	const connection = await ConnectionModel.create({
 		id: uuidv4(),
-		source: sourceId,
-		target: targetId,
+		source: sourceSlug,
+		target: targetSlug,
+		sourceName: source.name,
+		targetName: target.name,
 		protocol,
 		status: 'inactive',
 		latency,
 		bandwidth,
 	});
 
+	// Get the string ID of the connection
+	const connectionId = connection._id?.toString() || connection.id;
+	console.log(`Created connection ${connectionId} between ${sourceSlug} and ${targetSlug}`);
+
 	// Update the connections array in both network functions
-	await Promise.all([
-		NetworkFunctionModel.findOneAndUpdate({ id: sourceId }, { $push: { connections: connection.id } }),
-		NetworkFunctionModel.findOneAndUpdate({ id: targetId }, { $push: { connections: connection.id } }),
-	]);
+	const updateSourcePromise = NetworkFunctionModel.findOneAndUpdate(
+		{ slug: sourceSlug },
+		{ $addToSet: { connections: connectionId } }
+	);
+
+	const updateTargetPromise = NetworkFunctionModel.findOneAndUpdate(
+		{ slug: targetSlug },
+		{ $addToSet: { connections: connectionId } }
+	);
+
+	await Promise.all([updateSourcePromise, updateTargetPromise]);
+
+	console.log(`Updated network functions with connection reference: ${connectionId}`);
 
 	return connection;
 }
@@ -46,21 +61,21 @@ export async function createConnection(
  * Get all connections
  */
 export async function getConnections(): Promise<Connection[]> {
-	return ConnectionModel.find({});
+	return ConnectionModel.find().lean();
 }
 
 /**
- * Get connection by ID
+ * Get a connection by ID
  */
-export async function getConnectionById(id: string): Promise<Connection | null> {
-	return ConnectionModel.findOne({ id });
+export async function getConnection(id: string): Promise<Connection | null> {
+	return ConnectionModel.findOne({ id }).lean();
 }
 
 /**
  * Update a connection
  */
-export async function updateConnection(id: string, data: Partial<Connection>): Promise<Connection | null> {
-	return ConnectionModel.findOneAndUpdate({ id }, data, { new: true });
+export async function updateConnection(id: string, updates: Partial<Connection>): Promise<Connection | null> {
+	return ConnectionModel.findOneAndUpdate({ id }, updates, { new: true }).lean();
 }
 
 /**
@@ -75,8 +90,8 @@ export async function deleteConnection(id: string): Promise<boolean> {
 	const { source, target } = connection;
 
 	await Promise.all([
-		NetworkFunctionModel.findOneAndUpdate({ id: source }, { $pull: { connections: id } }),
-		NetworkFunctionModel.findOneAndUpdate({ id: target }, { $pull: { connections: id } }),
+		NetworkFunctionModel.findOneAndUpdate({ slug: source }, { $pull: { connections: id } }),
+		NetworkFunctionModel.findOneAndUpdate({ slug: target }, { $pull: { connections: id } }),
 	]);
 
 	const result = await ConnectionModel.deleteOne({ id });
@@ -140,6 +155,34 @@ export function getProtocolInfo(protocol: ProtocolType) {
 		N11: {
 			description: 'Interface between AMF and SMF',
 			usedFor: 'Session management',
+		},
+		N9: {
+			description: 'Interface between UPFs',
+			usedFor: 'User plane data transfer between V-UPF and H-UPF',
+		},
+		N10: {
+			description: 'Interface between UDM and SMF',
+			usedFor: 'Subscription data retrieval for session management',
+		},
+		N12: {
+			description: 'Interface between AMF and AUSF',
+			usedFor: 'UE authentication',
+		},
+		N13: {
+			description: 'Interface between UDM and AUSF',
+			usedFor: 'Authentication credential exchange',
+		},
+		N14: {
+			description: 'Interface between AMFs',
+			usedFor: 'AMF mobility and handover between PLMNs',
+		},
+		N15: {
+			description: 'Interface between AMF and PCF',
+			usedFor: 'Policy control',
+		},
+		N32: {
+			description: 'Interface between SEPPs',
+			usedFor: 'Secure inter-PLMN message exchange',
 		},
 	};
 

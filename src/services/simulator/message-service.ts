@@ -29,9 +29,10 @@ export async function createMessage(
 	// Validate that a connection exists between the network functions
 	if (protocol) {
 		const connection = await ConnectionModel.findOne({
-			source: sourceId,
-			target: destinationId,
-			protocol,
+			$or: [
+				{ source: sourceId, target: destinationId, protocol },
+				{ source: destinationId, target: sourceId, protocol }, // Check for bidirectional connections
+			],
 		});
 
 		if (!connection) {
@@ -110,8 +111,10 @@ export async function getMessagesForConnection(
 	limit = 50
 ): Promise<Message[]> {
 	const query: any = {
-		source: sourceId,
-		destination: destinationId,
+		$or: [
+			{ source: sourceId, destination: destinationId },
+			{ source: destinationId, destination: sourceId }, // Check for messages in both directions
+		],
 	};
 
 	if (protocol) {
@@ -139,19 +142,37 @@ export function generateSecurityContext(algorithm = '5G-AKA'): SecurityContext {
  */
 export function getMessageTypeInfo(type: MessageType) {
 	const messageTypeInfo: Record<MessageType, { description: string }> = {
-		REQUEST: {
+		[MessageType.REGISTRATION_REQUEST]: {
 			description: 'Request message that expects a response',
 		},
-		RESPONSE: {
+		[MessageType.AUTHENTICATION_REQUEST]: {
+			description: 'Request message that expects a response',
+		},
+		[MessageType.AUTHENTICATION_RESPONSE]: {
 			description: 'Response to a previous request',
 		},
-		NOTIFICATION: {
-			description: 'One-way notification that does not expect a response',
+		[MessageType.SECURITY_MODE_COMMAND]: {
+			description: 'Command message that expects a response',
 		},
-		ERROR: {
-			description: 'Error message indicating a failure',
+		[MessageType.SECURITY_MODE_COMPLETE]: {
+			description: 'Complete message that expects a response',
+		},
+		[MessageType.REGISTRATION_ACCEPT]: {
+			description: 'Accept message that expects a response',
+		},
+		[MessageType.REGISTRATION_COMPLETE]: {
+			description: 'Complete message that expects a response',
+		},
+		[MessageType.PDU_SESSION_ESTABLISHMENT_REQUEST]: {
+			description: 'Request message that expects a response',
+		},
+		[MessageType.PDU_SESSION_ESTABLISHMENT_ACCEPT]: {
+			description: 'Accept message that expects a response',
+		},
+		[MessageType.PDU_SESSION_ESTABLISHMENT_REJECT]: {
+			description: 'Reject message that expects a response',
 		},
 	};
 
-	return messageTypeInfo[type];
+	return messageTypeInfo[type] || { description: `Message type: ${MessageType[type] || 'Unknown'}` };
 }

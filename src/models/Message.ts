@@ -1,51 +1,59 @@
-import mongoose, { Schema, model, Model, models } from 'mongoose';
-import { Message } from '@/types/network';
+import mongoose, { Schema, Document, Model } from 'mongoose';
+import { Message as IMessage, MessageType } from '@/types/network';
 
-const SecurityContextSchema = new Schema({
-	keyId: { type: String, required: true },
-	algorithm: { type: String, required: true },
-	cipherKey: { type: String },
-	integrityKey: { type: String },
-	timestamp: { type: Date, required: true },
-});
+// Define SecurityContext Schema for embedding (if needed and defined in types)
+// Assuming SecurityContext is simple enough to be embedded or handled differently for now
+// const SecurityContextSchema = new Schema({...}, { _id: false });
 
-const MessageSchema = new Schema<Message>(
+const MessageSchema = new Schema<IMessage & Document>(
 	{
-		id: { type: String, required: true, unique: true },
 		type: {
-			type: String,
-			enum: ['REQUEST', 'RESPONSE', 'NOTIFICATION', 'ERROR'],
+			type: Number, // Using Number because MessageType is an enum in types
+			enum: Object.values(MessageType).filter((v) => typeof v === 'number'),
 			required: true,
 		},
-		source: { type: String, ref: 'NetworkFunction', required: true },
-		destination: { type: String, ref: 'NetworkFunction', required: true },
-		protocol: {
-			type: String,
-			enum: ['N1', 'N2', 'N3', 'N4', 'N6', 'N8', 'N11'],
+		source: {
+			type: String, // Network Function slug (e.g., "v-amf-1")
+			required: true,
+			index: true,
 		},
-		payload: { type: Schema.Types.Mixed },
-		timestamp: { type: Date, required: true, default: Date.now },
-		securityContext: { type: SecurityContextSchema },
-		status: {
-			type: String,
-			enum: ['sent', 'received', 'processing', 'error'],
-			default: 'sent',
+		destination: {
+			type: String, // Network Function slug
+			required: true,
+			index: true,
 		},
-		size: { type: Number },
+		payload: {
+			type: Schema.Types.Mixed, // Payload can be any structure
+			required: true,
+		},
+		timestamp: {
+			type: Date,
+			default: Date.now,
+			required: true,
+		},
+		securityContext: {
+			// Embed or reference SecurityContext if needed
+			type: Schema.Types.Mixed, // Placeholder
+			required: false,
+		},
+		description: {
+			type: String,
+			required: false,
+		},
 	},
-	{ timestamps: true }
-);
+	{ timestamps: { createdAt: 'timestamp' } }
+); // Use timestamp field for createdAt
 
 // Fix for client components in Next.js
-// Only create the model on the server side
-let MessageModel: Model<Message>;
+let MessageModel: Model<IMessage & Document>;
 
+// Only create the model on the server side
 if (typeof window === 'undefined') {
 	// We're on the server
-	MessageModel = (models.Message as Model<Message>) || model<Message>('Message', MessageSchema);
+	MessageModel = mongoose.models.Message || mongoose.model<IMessage & Document>('Message', MessageSchema);
 } else {
-	// We're on the client - provide a mock or minimal implementation
-	MessageModel = {} as Model<Message>;
+	// We're on the client - provide a minimal implementation
+	MessageModel = {} as Model<IMessage & Document>;
 }
 
 export default MessageModel;

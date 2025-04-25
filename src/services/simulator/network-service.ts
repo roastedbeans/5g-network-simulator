@@ -1,11 +1,34 @@
 import { v4 as uuidv4 } from 'uuid';
-import { NetworkFunction, NetworkFunctionType, Vector2D } from '@/types/network';
-import NetworkFunctionModel from '@/models/NetworkFunction';
+import slugify from 'slugify';
+import { NetworkFunction, NetworkFunctionType, Vector2D, Connection } from '@/types/network';
+import NetworkFunctionModel, { NetworkFunctionDocument } from '@/models/NetworkFunction';
 import ConnectionModel from '@/models/Connection';
 import dbConnect from '@/lib/mongodb';
 
 // Check if we're on the server side before using mongoose
 const isServer = typeof window === 'undefined';
+
+/**
+ * Transform a MongoDB document to a NetworkFunction type
+ * This ensures the types match regardless of how MongoDB returns the document
+ */
+function documentToNetworkFunction(doc: any): NetworkFunction {
+	if (!doc) return null as unknown as NetworkFunction;
+
+	return {
+		id: doc.id || (doc._id ? doc._id.toString() : ''),
+		slug: doc.slug || '',
+		name: doc.name || '',
+		type: doc.type as NetworkFunctionType,
+		plmn: doc.plmn,
+		status: doc.status || 'inactive',
+		connections: [], // Empty array by default, populated separately if needed
+		position: doc.position,
+		messages: Array.isArray(doc.messages) ? doc.messages : [],
+		ipAddress: doc.ipAddress,
+		description: doc.description,
+	};
+}
 
 /**
  * Create a new network function
@@ -17,14 +40,23 @@ export async function createNetworkFunction(
 	description?: string,
 	ipAddress?: string
 ): Promise<NetworkFunction> {
+	// Generate slug from name
+	const slug = slugify(name, { lower: true, strict: true });
+
 	if (!isServer) {
 		// We're on the client side - this should be handled through an API call
 		console.warn('Attempting to create a network function on the client side');
 		// Return a mock object that looks like a network function
 		return {
 			id: uuidv4(),
+			slug,
 			name,
 			type,
+			plmn: {
+				id: '310-260',
+				name: 'VPLMN',
+				role: 'visited',
+			},
 			status: 'inactive',
 			connections: [],
 			position,
@@ -39,8 +71,14 @@ export async function createNetworkFunction(
 
 	const networkFunction = await NetworkFunctionModel.create({
 		id: uuidv4(),
+		slug,
 		name,
 		type,
+		plmn: {
+			id: '310-260',
+			name: 'VPLMN',
+			role: 'visited',
+		},
 		status: 'inactive',
 		connections: [],
 		position,
@@ -49,28 +87,49 @@ export async function createNetworkFunction(
 		ipAddress,
 	});
 
-	return networkFunction;
+	return documentToNetworkFunction(networkFunction);
 }
 
 /**
  * Get all network functions
  */
-export async function getNetworkFunctions(): Promise<NetworkFunction[]> {
+export async function getNetworkFunctions() {
 	if (!isServer) {
-		// Client-side mock
-		console.warn('Attempting to fetch network functions on the client side');
+		console.warn('Attempted to get network functions on client side');
 		return [];
 	}
 
 	await dbConnect();
-	return NetworkFunctionModel.find({}).lean();
+	const docs = await NetworkFunctionModel.find().lean();
+	return docs.map((doc) => documentToNetworkFunction(doc as any)) as any;
 }
 
 /**
- * Get a network function by ID
+ * Get a single network function by ID
  */
-export async function getNetworkFunctionById(id: string): Promise<NetworkFunction | null> {
-	return NetworkFunctionModel.findOne({ id }).lean();
+export async function getNetworkFunction(id: string) {
+	if (!isServer) {
+		console.warn('Attempted to get network function on client side');
+		return null;
+	}
+
+	await dbConnect();
+	const doc = await NetworkFunctionModel.findOne({ id }).lean();
+	return doc ? (documentToNetworkFunction(doc as any) as any) : null;
+}
+
+/**
+ * Get a single network function by slug
+ */
+export async function getNetworkFunctionBySlug(slug: string) {
+	if (!isServer) {
+		console.warn('Attempted to get network function on client side');
+		return null;
+	}
+
+	await dbConnect();
+	const doc = await NetworkFunctionModel.findOne({ slug }).lean();
+	return doc ? (documentToNetworkFunction(doc as any) as any) : null;
 }
 
 /**
@@ -80,13 +139,23 @@ export async function updateNetworkFunction(
 	id: string,
 	data: Partial<NetworkFunction>
 ): Promise<NetworkFunction | null> {
-	return NetworkFunctionModel.findOneAndUpdate({ id }, data, { new: true }).lean();
+	const updated = await NetworkFunctionModel.findOneAndUpdate({ id }, data, { new: true }).lean();
+	return updated ? documentToNetworkFunction(updated) : null;
 }
 
 /**
  * Delete a network function
  */
 export async function deleteNetworkFunction(id: string): Promise<boolean> {
+	// Find the network function to get its slug
+	const networkFunction = await NetworkFunctionModel.findOne({ id });
+	if (!networkFunction) {
+		return false;
+	}
+
+	const slug = networkFunction.slug;
+
+	// Delete the network function
 	const result = await NetworkFunctionModel.deleteOne({ id });
 	if (result.deletedCount === 0) {
 		return false;
@@ -94,7 +163,7 @@ export async function deleteNetworkFunction(id: string): Promise<boolean> {
 
 	// Delete associated connections
 	await ConnectionModel.deleteMany({
-		$or: [{ source: id }, { target: id }],
+		$or: [{ source: slug }, { target: slug }],
 	});
 
 	return true;
@@ -107,16 +176,48 @@ export async function changeNetworkFunctionStatus(
 	id: string,
 	status: 'active' | 'inactive' | 'error'
 ): Promise<NetworkFunction | null> {
-	return NetworkFunctionModel.findOneAndUpdate({ id }, { status }, { new: true }).lean();
+	const updated = await NetworkFunctionModel.findOneAndUpdate({ id }, { status }, { new: true }).lean();
+	return updated ? documentToNetworkFunction(updated) : null;
+}
+
+/**
+ * Convert MongoDB connection document to Connection type
+ */
+function documentToConnection(conn: any): Connection {
+	if (!conn) return null as unknown as Connection;
+
+	return {
+		id: conn.id || (conn._id ? conn._id.toString() : ''),
+		source: conn.source || '',
+		target: conn.target || '',
+		protocol: conn.protocol,
+		status: conn.status || 'inactive',
+		sourceName: conn.sourceName,
+		targetName: conn.targetName,
+		label: conn.label,
+		sourceHandle: conn.sourceHandle,
+		targetHandle: conn.targetHandle,
+	};
 }
 
 /**
  * Get connections for a network function
  */
-export async function getNetworkFunctionConnections(id: string) {
-	return ConnectionModel.find({
-		$or: [{ source: id }, { target: id }],
+export async function getNetworkFunctionConnections(id: string): Promise<Connection[]> {
+	// Find the network function to get its slug
+	const networkFunction = await NetworkFunctionModel.findOne({ id });
+	if (!networkFunction) {
+		return [];
+	}
+
+	const slug = networkFunction.slug;
+
+	// Get connections and transform them
+	const connections = await ConnectionModel.find({
+		$or: [{ source: slug }, { target: slug }],
 	}).lean();
+
+	return connections.map(documentToConnection);
 }
 
 /**
@@ -145,13 +246,29 @@ export function getNetworkFunctionTemplate(type: NetworkFunctionType) {
 			description: 'Unified Data Management',
 			capabilities: ['Subscriber Data', 'Authentication Data', 'Access Authorization'],
 		},
-		'5GC': {
-			description: '5G Core Network',
-			capabilities: ['Network Slicing', 'Service-Based Architecture', 'Edge Computing Support'],
+		NRF: {
+			description: 'Network Repository Function',
+			capabilities: ['Service Registration', 'Service Discovery', 'NF Profile Management'],
 		},
-		RAN: {
-			description: 'Radio Access Network',
-			capabilities: ['Radio Resource Management', 'Mobility Management', 'Radio Bearer Control'],
+		SEPP: {
+			description: 'Security Edge Protection Proxy',
+			capabilities: ['Inter-PLMN Security', 'Message Filtering', 'Protocol Translation'],
+		},
+		PCF: {
+			description: 'Policy Control Function',
+			capabilities: ['Policy Rules', 'Charging Control', 'QoS Management'],
+		},
+		NSSF: {
+			description: 'Network Slice Selection Function',
+			capabilities: ['Slice Selection', 'Slice Instance Selection', 'Network Slice Management'],
+		},
+		NEF: {
+			description: 'Network Exposure Function',
+			capabilities: ['API Exposure', 'Event Monitoring', 'Service Capability Exposure'],
+		},
+		gNodeB: {
+			description: '5G Base Station',
+			capabilities: ['Radio Access', 'User Equipment Connection', 'Radio Resource Management'],
 		},
 		UE: {
 			description: 'User Equipment',
