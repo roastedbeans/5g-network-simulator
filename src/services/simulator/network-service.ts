@@ -246,6 +246,10 @@ export function getNetworkFunctionTemplate(type: NetworkFunctionType) {
 			description: 'Unified Data Management',
 			capabilities: ['Subscriber Data', 'Authentication Data', 'Access Authorization'],
 		},
+		SCP: {
+			description: 'Service Capability Proxy',
+			capabilities: ['Service Capability Discovery', 'Service Capability Selection', 'Service Capability Notification'],
+		},
 		NRF: {
 			description: 'Network Repository Function',
 			capabilities: ['Service Registration', 'Service Discovery', 'NF Profile Management'],

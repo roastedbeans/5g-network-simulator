@@ -32,7 +32,9 @@ const protocolColors: Record<ProtocolType, string> = {
 	N13: '#c0392b', // Dark Red - UDM-AUSF
 	N14: '#16a085', // Green Blue - AMF-AMF
 	N15: '#7f8c8d', // Gray - AMF-PCF
+	N27: '#34495e', // Dark Gray - SCP-SCP
 	N32: '#34495e', // Dark Gray - SEPP-SEPP
+	SBI: '#34495e', // Dark Gray - SCP-SBI
 };
 
 // Protocol stroke dash arrays for different types
@@ -50,7 +52,9 @@ const protocolStrokeDashArrays: Record<ProtocolType, string> = {
 	N13: '10,10', // Long dashed
 	N14: '5,5,1,5', // Dash-dot-dot
 	N15: '5,5', // Dashed
+	N27: '10,5', // Long dash-short dash
 	N32: '10,5', // Long dash-short dash
+	SBI: '10,5', // Long dash-short dash
 };
 
 const FloatingEdge = ({

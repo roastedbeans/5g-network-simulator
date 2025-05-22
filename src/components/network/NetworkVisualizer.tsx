@@ -37,6 +37,7 @@ const typeColorMap: Record<string, string> = {
 	UPF: '#1abc9c',
 	AUSF: '#34495e',
 	UDM: '#e67e22',
+	SCP: '#9b59b6',
 	DEFAULT: '#7f8c8d',
 };
 

@@ -82,6 +82,24 @@ const functionsData: PartialNetworkFunction[] = [
 		ipAddress: 'nrf.5gc.mnc070.mcc999.3gppnetwork.org:80',
 	},
 	{
+		name: 'V-SCP',
+		slug: 'v-scp',
+		type: 'SCP',
+		plmn: VPLMN,
+		status: 'active',
+		position: { x: 350, y: 225 },
+		ipAddress: 'scp.5gc.mnc070.mcc999.3gppnetwork.org:80',
+	},
+	{
+		name: 'V-SCP-D', // SCP Model D
+		slug: 'v-scp-d',
+		type: 'SCP',
+		plmn: VPLMN,
+		status: 'active',
+		position: { x: 350, y: 375 },
+		ipAddress: 'scp-d.5gc.mnc070.mcc999.3gppnetwork.org:80',
+	},
+	{
 		name: 'V-SEPP',
 		slug: 'v-sepp',
 		type: 'SEPP',
@@ -155,13 +173,31 @@ const functionsData: PartialNetworkFunction[] = [
 		position: { x: 850, y: 450 },
 		ipAddress: 'nrf.5gc.mnc001.mcc001.3gppnetwork.org:80',
 	},
+	{
+		name: 'H-SCP',
+		slug: 'h-scp',
+		type: 'SCP',
+		plmn: HPLMN,
+		status: 'active',
+		position: { x: 925, y: 225 },
+		ipAddress: 'scp.5gc.mnc001.mcc001.3gppnetwork.org:80',
+	},
+	{
+		name: 'H-SCP-D', // SCP Model D
+		slug: 'h-scp-d',
+		type: 'SCP',
+		plmn: HPLMN,
+		status: 'active',
+		position: { x: 925, y: 375 },
+		ipAddress: 'scp-d.5gc.mnc001.mcc001.3gppnetwork.org:80',
+	},
 ];
 
 // --- Define Connections ---
 // Structure: [sourceName, targetName, protocol]
 type ConnectionTuple = [string, string, ProtocolType];
 
-// Comprehensive connections for 5G roaming
+// Comprehensive connections for 5G roaming with SCP integration
 const connectionsData: ConnectionTuple[] = [
 	// VPLMN Access Network
 	['UE', 'V-gNodeB', 'N1'], // N1 simplified (actually goes to AMF through gNB as tunnel)
@@ -176,6 +212,16 @@ const connectionsData: ConnectionTuple[] = [
 	['V-AMF', 'V-SMF', 'N11'], // Session management in visited network
 	['V-AMF', 'V-NRF', 'N8'], // AMF discovers services through NRF
 	['V-SMF', 'V-NRF', 'N10'], // SMF discovers services through NRF
+
+	// VPLMN SCP Connections
+	['V-SCP', 'V-NRF', 'SBI'], // SCP to NRF for service discovery
+	['V-AMF', 'V-SCP', 'SBI'], // AMF uses SCP for service communication
+	['V-SMF', 'V-SCP', 'SBI'], // SMF uses SCP for service communication
+	['V-SCP', 'V-SEPP', 'SBI'], // SCP to SEPP for inter-PLMN communication
+	['V-SCP-D', 'V-NRF', 'SBI'], // SCP-D to NRF for service discovery
+	['V-UPF-LBO', 'V-SCP-D', 'SBI'], // UPF-LBO uses SCP-D for service communication
+	['V-UPF-HR', 'V-SCP-D', 'SBI'], // UPF-HR uses SCP-D for service communication
+	['V-SCP-D', 'V-SCP', 'SBI'], // SCP-D to SCP for service coordination
 
 	// VPLMN Core Network - User Plane
 	['V-SMF', 'V-UPF-LBO', 'N4'], // SMF controls Local Breakout UPF
@@ -198,11 +244,26 @@ const connectionsData: ConnectionTuple[] = [
 	['H-SMF', 'H-NRF', 'N10'], // SMF discovers services through NRF
 	['H-AMF', 'H-NRF', 'N8'], // AMF discovers services through NRF
 
+	// HPLMN SCP Connections
+	['H-SCP', 'H-NRF', 'SBI'], // SCP to NRF for service discovery
+	['H-AMF', 'H-SCP', 'SBI'], // AMF uses SCP for service communication
+	['H-SMF', 'H-SCP', 'SBI'], // SMF uses SCP for service communication
+	['H-AUSF', 'H-SCP', 'SBI'], // AUSF uses SCP for service communication
+	['H-UDM', 'H-SCP', 'SBI'], // UDM uses SCP for service communication
+	['H-SCP', 'H-SEPP', 'SBI'], // SCP to SEPP for inter-PLMN communication
+	['H-SCP-D', 'H-NRF', 'SBI'], // SCP-D to NRF for service discovery
+	['H-UPF', 'H-SCP-D', 'SBI'], // UPF uses SCP-D for service communication
+	['H-SCP-D', 'H-SCP', 'SBI'], // SCP-D to SCP for service coordination
+
 	// HPLMN Core Network - User Plane
 	['H-SMF', 'H-UPF', 'N4'], // SMF controls UPF
 
 	// Inter-PLMN Data Path (User Plane)
 	['V-UPF-HR', 'H-UPF', 'N9'], // Data path for Home Routed
+
+	// SCP to SCP Communication (Inter-PLMN)
+	['V-SCP', 'H-SCP', 'N27'], // SCP-to-SCP communication for service discovery and routing
+	['V-SCP-D', 'H-SCP-D', 'N27'], // SCP-D-to-SCP-D communication for service discovery and routing
 ];
 
 /**
@@ -493,7 +554,7 @@ export async function setupRoamingScenario(): Promise<void> {
 	});
 
 	await Promise.all(updatePromises);
-	console.log('Roaming scenario setup complete');
+	console.log('Roaming scenario setup complete with SCP integration');
 }
 
 /**

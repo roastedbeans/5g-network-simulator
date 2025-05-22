@@ -180,9 +180,17 @@ export function getProtocolInfo(protocol: ProtocolType) {
 			description: 'Interface between AMF and PCF',
 			usedFor: 'Policy control',
 		},
+		N27: {
+			description: 'Interface between SCPs',
+			usedFor: 'Service discovery and routing',
+		},
 		N32: {
 			description: 'Interface between SEPPs',
 			usedFor: 'Secure inter-PLMN message exchange',
+		},
+		SBI: {
+			description: 'Interface between network functions',
+			usedFor: 'Service discovery and routing',
 		},
 	};
 
