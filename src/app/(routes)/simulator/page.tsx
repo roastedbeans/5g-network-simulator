@@ -3,8 +3,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { NetworkVisualizer } from '@/components/network/NetworkVisualizer';
 import { NetworkFunction, Connection, Message } from '@/types/network';
-import { Button, Card, CardHeader, CardBody, CardFooter, Badge } from '@heroui/react';
+import { Button } from '@heroui/react';
 import { type Edge, ReactFlowProvider, type Node } from '@xyflow/react';
+import NavigationBar from '@/components/ui/NavigationBar';
 
 // Mock data generator for testing when API fails
 const generateMockNetworkData = () => {
@@ -447,7 +448,7 @@ export default function SimulatorPage() {
 	return (
 		<div className='flex flex-col h-screen p-4 bg-gray-50 dark:bg-gray-900'>
 			<div className='flex justify-between items-center mb-4'>
-				<h1 className='text-2xl font-bold'>5G Network Simulator - Roaming</h1>
+				<NavigationBar />
 				<div className='flex space-x-2 items-center'>
 					{statusMessage.type && (
 						<div

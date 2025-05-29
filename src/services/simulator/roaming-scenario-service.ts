@@ -51,7 +51,7 @@ const functionsData: PartialNetworkFunction[] = [
 		type: 'SMF',
 		plmn: VPLMN,
 		status: 'active',
-		position: { x: 400, y: 150 },
+		position: { x: 400, y: 100 },
 		ipAddress: 'smf.5gc.mnc070.mcc999.3gppnetwork.org:80',
 	},
 	{
@@ -78,26 +78,8 @@ const functionsData: PartialNetworkFunction[] = [
 		type: 'NRF',
 		plmn: VPLMN,
 		status: 'active',
-		position: { x: 400, y: 300 },
+		position: { x: 400, y: 360 },
 		ipAddress: 'nrf.5gc.mnc070.mcc999.3gppnetwork.org:80',
-	},
-	{
-		name: 'V-SCP',
-		slug: 'v-scp',
-		type: 'SCP',
-		plmn: VPLMN,
-		status: 'active',
-		position: { x: 350, y: 225 },
-		ipAddress: 'scp.5gc.mnc070.mcc999.3gppnetwork.org:80',
-	},
-	{
-		name: 'V-SCP-D', // SCP Model D
-		slug: 'v-scp-d',
-		type: 'SCP',
-		plmn: VPLMN,
-		status: 'active',
-		position: { x: 350, y: 375 },
-		ipAddress: 'scp-d.5gc.mnc070.mcc999.3gppnetwork.org:80',
 	},
 	{
 		name: 'V-SEPP',
@@ -107,6 +89,16 @@ const functionsData: PartialNetworkFunction[] = [
 		status: 'active',
 		position: { x: 550, y: 300 },
 		ipAddress: 'sepp.5gc.mnc070.mcc999.3gppnetwork.org:80',
+	},
+	{
+		name: 'V-SCP',
+		slug: 'v-scp',
+		type: 'SCP',
+		plmn: VPLMN,
+		status: 'active',
+		position: { x: 400, y: 225 },
+		ipAddress: 'scp.5gc.mnc070.mcc999.3gppnetwork.org:80',
+		description: 'Visited Network SCP for Model D',
 	},
 
 	// HPLMN Functions - Right side of the diagram
@@ -125,7 +117,7 @@ const functionsData: PartialNetworkFunction[] = [
 		type: 'AMF',
 		plmn: HPLMN,
 		status: 'active',
-		position: { x: 850, y: 150 },
+		position: { x: 850, y: 100 },
 		ipAddress: 'amf.5gc.mnc001.mcc001.3gppnetwork.org:80',
 	},
 	{
@@ -152,7 +144,7 @@ const functionsData: PartialNetworkFunction[] = [
 		type: 'AUSF',
 		plmn: HPLMN,
 		status: 'active',
-		position: { x: 850, y: 300 },
+		position: { x: 850, y: 450 },
 		ipAddress: 'ausf.5gc.mnc001.mcc001.3gppnetwork.org:80',
 	},
 	{
@@ -170,7 +162,7 @@ const functionsData: PartialNetworkFunction[] = [
 		type: 'NRF',
 		plmn: HPLMN,
 		status: 'active',
-		position: { x: 850, y: 450 },
+		position: { x: 850, y: 360 },
 		ipAddress: 'nrf.5gc.mnc001.mcc001.3gppnetwork.org:80',
 	},
 	{
@@ -179,17 +171,9 @@ const functionsData: PartialNetworkFunction[] = [
 		type: 'SCP',
 		plmn: HPLMN,
 		status: 'active',
-		position: { x: 925, y: 225 },
+		position: { x: 850, y: 225 },
 		ipAddress: 'scp.5gc.mnc001.mcc001.3gppnetwork.org:80',
-	},
-	{
-		name: 'H-SCP-D', // SCP Model D
-		slug: 'h-scp-d',
-		type: 'SCP',
-		plmn: HPLMN,
-		status: 'active',
-		position: { x: 925, y: 375 },
-		ipAddress: 'scp-d.5gc.mnc001.mcc001.3gppnetwork.org:80',
+		description: 'Home Network SCP for Model D',
 	},
 ];
 
@@ -197,7 +181,7 @@ const functionsData: PartialNetworkFunction[] = [
 // Structure: [sourceName, targetName, protocol]
 type ConnectionTuple = [string, string, ProtocolType];
 
-// Comprehensive connections for 5G roaming with SCP integration
+// Comprehensive connections for 5G roaming
 const connectionsData: ConnectionTuple[] = [
 	// VPLMN Access Network
 	['UE', 'V-gNodeB', 'N1'], // N1 simplified (actually goes to AMF through gNB as tunnel)
@@ -208,34 +192,43 @@ const connectionsData: ConnectionTuple[] = [
 	// SEPP to SEPP (Inter-PLMN Security)
 	['V-SEPP', 'H-SEPP', 'N32'], // Secure connection between SEPPs
 
-	// VPLMN Core Network - Control Plane
+	// SCP to SCP (For Model D - Direct)
+	['V-SCP', 'H-SCP', 'N27'], // SCP to SCP communication
+
+	// VPLMN Core Network - Service Based Interfaces to SCP
+	['V-AMF', 'V-SCP', 'SBI'], // AMF to SCP
+	['V-SMF', 'V-SCP', 'SBI'], // SMF to SCP
+	['V-NRF', 'V-SCP', 'SBI'], // NRF to SCP
+
+	// VPLMN SCP to other elements
+	['V-SCP', 'V-SEPP', 'SBI'], // SCP to SEPP for inter-PLMN
+
+	// HPLMN SCP to other elements
+	['H-SCP', 'H-SEPP', 'SBI'], // SCP to SEPP for inter-PLMN
+	['H-SCP', 'H-AMF', 'SBI'], // SCP to AMF
+	['H-SCP', 'H-SMF', 'SBI'], // SCP to SMF
+	['H-SCP', 'H-AUSF', 'SBI'], // SCP to AUSF
+	['H-SCP', 'H-UDM', 'SBI'], // SCP to UDM
+	['H-SCP', 'H-NRF', 'SBI'], // SCP to NRF
+
+	// VPLMN Core Network - Control Plane (Original connections preserved for backward compatibility)
 	['V-AMF', 'V-SMF', 'N11'], // Session management in visited network
 	['V-AMF', 'V-NRF', 'N8'], // AMF discovers services through NRF
 	['V-SMF', 'V-NRF', 'N10'], // SMF discovers services through NRF
-
-	// VPLMN SCP Connections
-	['V-SCP', 'V-NRF', 'SBI'], // SCP to NRF for service discovery
-	['V-AMF', 'V-SCP', 'SBI'], // AMF uses SCP for service communication
-	['V-SMF', 'V-SCP', 'SBI'], // SMF uses SCP for service communication
-	['V-SCP', 'V-SEPP', 'SBI'], // SCP to SEPP for inter-PLMN communication
-	['V-SCP-D', 'V-NRF', 'SBI'], // SCP-D to NRF for service discovery
-	['V-UPF-LBO', 'V-SCP-D', 'SBI'], // UPF-LBO uses SCP-D for service communication
-	['V-UPF-HR', 'V-SCP-D', 'SBI'], // UPF-HR uses SCP-D for service communication
-	['V-SCP-D', 'V-SCP', 'SBI'], // SCP-D to SCP for service coordination
 
 	// VPLMN Core Network - User Plane
 	['V-SMF', 'V-UPF-LBO', 'N4'], // SMF controls Local Breakout UPF
 	['V-SMF', 'V-UPF-HR', 'N4'], // SMF controls Home Routed UPF
 
-	// VPLMN Control Plane to SEPP
+	// VPLMN Control Plane to SEPP (Original connections preserved for backward compatibility)
 	['V-AMF', 'V-SEPP', 'N14'], // V-AMF to V-SEPP for inter-PLMN AMF comms
 	['V-SMF', 'V-SEPP', 'N10'], // V-SMF to V-SEPP for session management
 
-	// HPLMN SEPP to Core Network
+	// HPLMN SEPP to Core Network (Original connections preserved for backward compatibility)
 	['H-SEPP', 'H-AMF', 'N14'], // H-SEPP to H-AMF for mobility management
 	['H-SEPP', 'H-SMF', 'N10'], // H-SEPP to H-SMF for session management
 
-	// HPLMN Core Network - Control Plane
+	// HPLMN Core Network - Control Plane (Original connections preserved for backward compatibility)
 	['H-AMF', 'H-SMF', 'N11'], // AMF to SMF for session management
 	['H-AMF', 'H-AUSF', 'N12'], // AMF to AUSF for authentication
 	['H-AMF', 'H-UDM', 'N8'], // AMF to UDM for subscription data
@@ -244,26 +237,11 @@ const connectionsData: ConnectionTuple[] = [
 	['H-SMF', 'H-NRF', 'N10'], // SMF discovers services through NRF
 	['H-AMF', 'H-NRF', 'N8'], // AMF discovers services through NRF
 
-	// HPLMN SCP Connections
-	['H-SCP', 'H-NRF', 'SBI'], // SCP to NRF for service discovery
-	['H-AMF', 'H-SCP', 'SBI'], // AMF uses SCP for service communication
-	['H-SMF', 'H-SCP', 'SBI'], // SMF uses SCP for service communication
-	['H-AUSF', 'H-SCP', 'SBI'], // AUSF uses SCP for service communication
-	['H-UDM', 'H-SCP', 'SBI'], // UDM uses SCP for service communication
-	['H-SCP', 'H-SEPP', 'SBI'], // SCP to SEPP for inter-PLMN communication
-	['H-SCP-D', 'H-NRF', 'SBI'], // SCP-D to NRF for service discovery
-	['H-UPF', 'H-SCP-D', 'SBI'], // UPF uses SCP-D for service communication
-	['H-SCP-D', 'H-SCP', 'SBI'], // SCP-D to SCP for service coordination
-
 	// HPLMN Core Network - User Plane
 	['H-SMF', 'H-UPF', 'N4'], // SMF controls UPF
 
 	// Inter-PLMN Data Path (User Plane)
 	['V-UPF-HR', 'H-UPF', 'N9'], // Data path for Home Routed
-
-	// SCP to SCP Communication (Inter-PLMN)
-	['V-SCP', 'H-SCP', 'N27'], // SCP-to-SCP communication for service discovery and routing
-	['V-SCP-D', 'H-SCP-D', 'N27'], // SCP-D-to-SCP-D communication for service discovery and routing
 ];
 
 /**
@@ -554,7 +532,7 @@ export async function setupRoamingScenario(): Promise<void> {
 	});
 
 	await Promise.all(updatePromises);
-	console.log('Roaming scenario setup complete with SCP integration');
+	console.log('Roaming scenario setup complete');
 }
 
 /**

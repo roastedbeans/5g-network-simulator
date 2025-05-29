@@ -154,15 +154,6 @@ export function getMessageTypeInfo(type: MessageType) {
 		[MessageType.SECURITY_MODE_COMMAND]: {
 			description: 'Command message that expects a response',
 		},
-		[MessageType.SECURITY_MODE_COMPLETE]: {
-			description: 'Complete message that expects a response',
-		},
-		[MessageType.REGISTRATION_ACCEPT]: {
-			description: 'Accept message that expects a response',
-		},
-		[MessageType.REGISTRATION_COMPLETE]: {
-			description: 'Complete message that expects a response',
-		},
 		[MessageType.PDU_SESSION_ESTABLISHMENT_REQUEST]: {
 			description: 'Request message that expects a response',
 		},
@@ -171,6 +162,15 @@ export function getMessageTypeInfo(type: MessageType) {
 		},
 		[MessageType.PDU_SESSION_ESTABLISHMENT_REJECT]: {
 			description: 'Reject message that expects a response',
+		},
+		[MessageType.SECURITY_MODE_COMPLETE]: {
+			description: 'Complete message that expects a response',
+		},
+		[MessageType.REGISTRATION_ACCEPT]: {
+			description: 'Accept message that expects a response',
+		},
+		[MessageType.REGISTRATION_COMPLETE]: {
+			description: 'Complete message that expects a response',
 		},
 	};
 

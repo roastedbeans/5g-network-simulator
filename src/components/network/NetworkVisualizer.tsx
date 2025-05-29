@@ -65,8 +65,12 @@ const calculateAutomaticLayout = (
 	existingPositions: Record<string, { x: number; y: number }> = {},
 	forceLayout = false
 ): Record<string, { x: number; y: number }> => {
+	// If we have existing positions and not forcing layout, return existing positions
+	if (!forceLayout && Object.keys(existingPositions).length > 0) {
+		return existingPositions;
+	}
+
 	// Store original positions for nodes if not already stored
-	// We use this to only apply the spread once from the original positions
 	const originalPositions: Record<string, { x: number; y: number }> = {};
 	const newPositions: Record<string, { x: number; y: number }> = {};
 
@@ -84,11 +88,6 @@ const calculateAutomaticLayout = (
 			originalPositions[node.id] = { x: 0, y: 0 };
 		}
 	});
-
-	// If no nodes have positions or force layout is true, apply the spread
-	if (Object.keys(originalPositions).length === 0 || forceLayout) {
-		return existingPositions;
-	}
 
 	// Calculate the center of all original positions
 	let centerX = 0;
@@ -124,42 +123,6 @@ const calculateAutomaticLayout = (
 	return newPositions;
 };
 
-// Helper function to apply spreading from center point
-const applySpreadToPositions = (
-	positions: Record<string, { x: number; y: number }>,
-	spreadFactor: number
-): Record<string, { x: number; y: number }> => {
-	const spreadPositions: Record<string, { x: number; y: number }> = {};
-	const nodeCount = Object.keys(positions).length;
-
-	if (nodeCount === 0) return positions;
-
-	// Calculate center point
-	let centerX = 0;
-	let centerY = 0;
-
-	Object.values(positions).forEach((pos) => {
-		centerX += pos.x;
-		centerY += pos.y;
-	});
-
-	centerX /= nodeCount;
-	centerY /= nodeCount;
-
-	// Spread nodes outward from center by spreadFactor
-	Object.entries(positions).forEach(([id, pos]) => {
-		const dx = pos.x - centerX;
-		const dy = pos.y - centerY;
-
-		spreadPositions[id] = {
-			x: centerX + dx * spreadFactor,
-			y: centerY + dy * spreadFactor,
-		};
-	});
-
-	return spreadPositions;
-};
-
 // Network Visualizer Component
 interface NetworkVisualizerProps {
 	networkFunctions: Node[];
@@ -191,7 +154,7 @@ export function NetworkVisualizer({
 	const reactFlowWrapper = useRef<HTMLDivElement>(null);
 	const { zoomIn, zoomOut, fitView } = useReactFlow();
 
-	// Process the nodes and edges with visual properties
+	// Process the nodes initially and when network structure changes (but NOT when selection changes)
 	useEffect(() => {
 		// Find connections for a specific node
 		const getNodeConnections = (nodeId: string) => {
@@ -243,12 +206,11 @@ export function NetworkVisualizer({
 		const enhancedNodes = networkFunctions.map((nf: any) => {
 			const nodeType = nf.type || 'DEFAULT';
 			const nodeStatus = nf.status || 'inactive';
-			const isSelected = selectedNodeId === nf.id;
 
-			// Get connections for all nodes, not just selected ones
+			// Get connections for all nodes
 			const nodeConnections = getNodeConnections(nf.id);
 
-			// Use calculated position
+			// Use calculated position or preserve existing position
 			const position = calculatedPositions[nf.id] || nf.position || { x: 0, y: 0 };
 
 			return {
@@ -260,16 +222,27 @@ export function NetworkVisualizer({
 					...nf,
 					typeColor: typeColorMap[nodeType] || typeColorMap.DEFAULT,
 					statusColor: statusColorMap[nodeStatus] || statusColorMap.DEFAULT,
-					isSelected,
 					connections: nodeConnections,
 				},
 			};
 		});
 
 		setNodes(enhancedNodes as Node[]);
-		// We specifically omit 'nodes' from the dependency array to prevent position reset
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [networkFunctions, selectedNodeId, connections, hasAppliedLayout]);
+		// REMOVED selectedNodeId from dependency array to prevent position reset on selection
+	}, [networkFunctions, connections, hasAppliedLayout]);
+
+	// Separate effect to handle selection styling without affecting positions
+	useEffect(() => {
+		setNodes((currentNodes) =>
+			currentNodes.map((node) => ({
+				...node,
+				data: {
+					...node.data,
+					isSelected: selectedNodeId === node.id,
+				},
+			}))
+		);
+	}, [selectedNodeId, setNodes]);
 
 	// Auto layout button handler
 	const applyAutoLayout = useCallback(() => {
@@ -307,12 +280,6 @@ export function NetworkVisualizer({
 				}
 			}
 
-			// Log to help debug animation issues
-			if (isConnectedToSelectedNode) {
-				console.log(`Edge ${conn.id} is connected to selected node ${selectedNodeId}`);
-				console.log(`Animation class: ${animationClass}`);
-			}
-
 			return {
 				...conn,
 				type: 'floating',
@@ -338,12 +305,6 @@ export function NetworkVisualizer({
 				animated: true, // Ensure animated prop is passed to the edge
 			};
 		});
-
-		// Log all edges with animation classes
-		console.log(
-			'All edges with animation:',
-			enhancedEdges.filter((edge) => edge.data.animationClass)
-		);
 
 		setEdges(enhancedEdges as Edge[]);
 	}, [nodes, connections, networkFunctions, selectedNodeId]);
@@ -377,30 +338,33 @@ export function NetworkVisualizer({
 		[onConnectionClick]
 	);
 
-	// When nodes are dragged
-	const onNodeDragStop = useCallback((event: React.MouseEvent, node: Node, nodes: Node[]) => {
-		// Store the updated node positions
-		setNodes((prevNodes) => {
-			return prevNodes.map((prevNode) => {
-				// If this is the dragged node, update its position from the event
-				if (prevNode.id === node.id) {
-					return {
-						...prevNode,
-						position: node.position,
-					};
-				}
-				// For other nodes, check if they were also dragged as part of a multi-selection
-				const draggedNode = nodes.find((n) => n.id === prevNode.id);
-				if (draggedNode) {
-					return {
-						...prevNode,
-						position: draggedNode.position,
-					};
-				}
-				return prevNode;
+	// When nodes are dragged - preserve positions
+	const onNodeDragStop = useCallback(
+		(event: React.MouseEvent, node: Node, nodes: Node[]) => {
+			// Update positions without triggering full re-render
+			setNodes((prevNodes) => {
+				return prevNodes.map((prevNode) => {
+					// If this is the dragged node, update its position from the event
+					if (prevNode.id === node.id) {
+						return {
+							...prevNode,
+							position: node.position,
+						};
+					}
+					// For other nodes, check if they were also dragged as part of a multi-selection
+					const draggedNode = nodes.find((n) => n.id === prevNode.id);
+					if (draggedNode) {
+						return {
+							...prevNode,
+							position: draggedNode.position,
+						};
+					}
+					return prevNode;
+				});
 			});
-		});
-	}, []);
+		},
+		[setNodes]
+	);
 
 	// Client-side rendering check
 	const [isClient, setIsClient] = useState(false);
