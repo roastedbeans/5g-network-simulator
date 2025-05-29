@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 // Use a clear default URI and allow override from environment variables
-const MONGODB_URI = process.env.MONGODB_OPEN5GS_URI || 'mongodb://localhost:27017/open5gs';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/open5gs';
 
 // Connection state
 let isConnected = false;
