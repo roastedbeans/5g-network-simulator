@@ -53,7 +53,7 @@ export async function createNetworkFunction(
 			name,
 			type,
 			plmn: {
-				id: '310-260',
+				id: '070-999',
 				name: 'VPLMN',
 				role: 'visited',
 			},
@@ -75,7 +75,7 @@ export async function createNetworkFunction(
 		name,
 		type,
 		plmn: {
-			id: '310-260',
+			id: '070-999',
 			name: 'VPLMN',
 			role: 'visited',
 		},
@@ -245,6 +245,10 @@ export function getNetworkFunctionTemplate(type: NetworkFunctionType) {
 		UDM: {
 			description: 'Unified Data Management',
 			capabilities: ['Subscriber Data', 'Authentication Data', 'Access Authorization'],
+		},
+		SCP: {
+			description: 'Service Capability Proxy',
+			capabilities: ['Service Capability Discovery', 'Service Capability Selection', 'Service Capability Notification'],
 		},
 		NRF: {
 			description: 'Network Repository Function',

@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { SecurityContext } from '@/types/network';
+import { MessageType, SecurityContext } from '@/types/network';
 import { createMessage } from '../simulator/message-service';
 
 /**
@@ -22,7 +22,7 @@ export async function simulate5GAKA(ueId: string, amfId: string, ausfId: string,
 	const authRequest = await createMessage(
 		ueId,
 		amfId,
-		'REQUEST',
+		MessageType.AUTHENTICATION_REQUEST,
 		{
 			supi: `imsi-${Math.floor(100000000000000 + Math.random() * 900000000000000)}`,
 			authType: '5G-AKA',
@@ -34,7 +34,7 @@ export async function simulate5GAKA(ueId: string, amfId: string, ausfId: string,
 	const amfToAusfRequest = await createMessage(
 		amfId,
 		ausfId,
-		'REQUEST',
+		MessageType.AUTHENTICATION_REQUEST,
 		{
 			supi: (authRequest.payload as any).supi,
 			servingNetworkName: 'open5gs.org',
@@ -46,7 +46,7 @@ export async function simulate5GAKA(ueId: string, amfId: string, ausfId: string,
 	const ausfToUdmRequest = await createMessage(
 		ausfId,
 		udmId,
-		'REQUEST',
+		MessageType.AUTHENTICATION_REQUEST,
 		{
 			supi: (amfToAusfRequest.payload as any).supi,
 			servingNetworkName: (amfToAusfRequest.payload as any).servingNetworkName,
@@ -60,7 +60,7 @@ export async function simulate5GAKA(ueId: string, amfId: string, ausfId: string,
 	const udmToAusfResponse = await createMessage(
 		udmId,
 		ausfId,
-		'RESPONSE',
+		MessageType.AUTHENTICATION_REQUEST,
 		{
 			authType: '5G-AKA',
 			authenticationVector: authVectors,
@@ -72,7 +72,7 @@ export async function simulate5GAKA(ueId: string, amfId: string, ausfId: string,
 	const ausfToAmfResponse = await createMessage(
 		ausfId,
 		amfId,
-		'RESPONSE',
+		MessageType.AUTHENTICATION_RESPONSE,
 		{
 			authType: '5G-AKA',
 			authData: {
@@ -87,7 +87,7 @@ export async function simulate5GAKA(ueId: string, amfId: string, ausfId: string,
 	const amfToUeChallenge = await createMessage(
 		amfId,
 		ueId,
-		'REQUEST',
+		MessageType.AUTHENTICATION_REQUEST,
 		{
 			authType: '5G-AKA',
 			rand: authVectors.rand,
@@ -101,7 +101,7 @@ export async function simulate5GAKA(ueId: string, amfId: string, ausfId: string,
 	const ueToAmfResponse = await createMessage(
 		ueId,
 		amfId,
-		'RESPONSE',
+		MessageType.AUTHENTICATION_REQUEST,
 		{
 			res: ueResponse.res,
 		},
@@ -112,7 +112,7 @@ export async function simulate5GAKA(ueId: string, amfId: string, ausfId: string,
 	const amfToAusfConfirmRequest = await createMessage(
 		amfId,
 		ausfId,
-		'REQUEST',
+		MessageType.AUTHENTICATION_REQUEST,
 		{
 			supi: (authRequest.payload as any).supi,
 			res: (ueToAmfResponse.payload as any).res,
@@ -125,7 +125,7 @@ export async function simulate5GAKA(ueId: string, amfId: string, ausfId: string,
 	const ausfToAmfConfirmResponse = await createMessage(
 		ausfId,
 		amfId,
-		'RESPONSE',
+		MessageType.AUTHENTICATION_REQUEST,
 		{
 			authResult: isAuthenticated ? 'SUCCESS' : 'FAILURE',
 			supi: (authRequest.payload as any).supi,
@@ -139,7 +139,7 @@ export async function simulate5GAKA(ueId: string, amfId: string, ausfId: string,
 	const amfToUeFinal = await createMessage(
 		amfId,
 		ueId,
-		isAuthenticated ? 'RESPONSE' : 'ERROR',
+		MessageType.AUTHENTICATION_REQUEST,
 		{
 			authResult: isAuthenticated ? 'SUCCESS' : 'FAILURE',
 			...(isAuthenticated ? { kseaf: authVectors.kseaf } : {}),

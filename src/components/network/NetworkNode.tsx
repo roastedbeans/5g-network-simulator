@@ -40,7 +40,7 @@ function NetworkFunctionNode({ data, selected }: NetworkFunctionNodeProps) {
 	const plmnBorder = plmnRole === 'home' ? '#284c64' : '#831d11';
 	const borderColor = isSelected ? plmnBorder : statusColor;
 	// Don't change these dimensions on selection to avoid position shifts
-	const cardWidth = '200px';
+	const cardWidth = '280px';
 	const minHeight = '100px';
 
 	return (
@@ -66,8 +66,10 @@ function NetworkFunctionNode({ data, selected }: NetworkFunctionNodeProps) {
 
 			{/* Content */}
 			<div className='text-sm p-2'>
-				<div className='text-sm text-gray-200'>PLMN: {plmn?.id || 'N/A'}</div>
-				{ipAddress && <div className='text-xs text-gray-200'>IP: {ipAddress}</div>}
+				<p className='text-sm text-gray-200'>
+					{plmn?.name}: {plmn?.id || 'N/A'}
+				</p>
+				{ipAddress && <p className='text-xs text-gray-200 text-wrap'>IP: {ipAddress}</p>}
 
 				{/* Show protocols if available */}
 				{protocols.length > 0 && (

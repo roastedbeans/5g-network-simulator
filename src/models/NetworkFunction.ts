@@ -52,7 +52,7 @@ const NetworkFunctionSchema = new Schema<NetworkFunctionDocument>(
 		},
 		type: {
 			type: String,
-			enum: ['AMF', 'SMF', 'UPF', 'AUSF', 'UDM', 'NRF', 'SEPP', 'PCF', 'NSSF', 'NEF', 'gNodeB', 'UE'],
+			enum: ['AMF', 'SMF', 'UPF', 'AUSF', 'UDM', 'NRF', 'SEPP', 'PCF', 'NSSF', 'NEF', 'gNodeB', 'UE', 'SCP'],
 			required: true,
 		},
 		name: { type: String, required: true, index: true },

@@ -15,7 +15,8 @@ export type NetworkFunctionType =
 	| 'NSSF'
 	| 'NEF' // Additional Core Functions (Optional for basic roaming)
 	| 'gNodeB' // Radio Access Network
-	| 'UE'; // User Equipment
+	| 'UE' // User Equipment
+	| 'SCP'; // Service Capability Proxy
 
 export type NetworkRole = 'home' | 'visited';
 
@@ -67,7 +68,9 @@ export type ProtocolType =
 	| 'N13'
 	| 'N14'
 	| 'N15'
-	| 'N32';
+	| 'N27'
+	| 'N32'
+	| 'SBI';
 
 export interface Connection {
 	id: string;

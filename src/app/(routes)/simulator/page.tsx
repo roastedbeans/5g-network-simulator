@@ -3,8 +3,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { NetworkVisualizer } from '@/components/network/NetworkVisualizer';
 import { NetworkFunction, Connection, Message } from '@/types/network';
-import { Button, Card, CardHeader, CardBody, CardFooter, Badge } from '@heroui/react';
+import { Button } from '@heroui/react';
 import { type Edge, ReactFlowProvider, type Node } from '@xyflow/react';
+import NavigationBar from '@/components/ui/NavigationBar';
 
 // Mock data generator for testing when API fails
 const generateMockNetworkData = () => {
@@ -202,8 +203,6 @@ export default function SimulatorPage() {
 		loadTopology();
 	}, []);
 
-	console.log('topology data', networkFunctions, connections);
-
 	// Setup 5G Roaming Scenario
 	const setupRoamingScenario = async () => {
 		setIsLoading(true);
@@ -240,7 +239,6 @@ export default function SimulatorPage() {
 			}
 
 			const topologyData = await topologyResponse.json();
-			console.log('Topology data received:', topologyData);
 
 			if (topologyData.success && topologyData.data) {
 				// Perform basic validation before setting state
@@ -251,10 +249,6 @@ export default function SimulatorPage() {
 				if (!topologyData.data.connections || !Array.isArray(topologyData.data.connections)) {
 					console.warn('No connections in topology response');
 				}
-
-				// Log connection details for debugging
-				console.log(`Setting ${topologyData.data.networkFunctions.length} network functions`);
-				console.log(`Setting ${topologyData.data.connections?.length || 0} connections`);
 
 				if (topologyData.data.connections && topologyData.data.connections.length > 0) {
 					console.log('Sample connection:', topologyData.data.connections[0]);
@@ -454,7 +448,7 @@ export default function SimulatorPage() {
 	return (
 		<div className='flex flex-col h-screen p-4 bg-gray-50 dark:bg-gray-900'>
 			<div className='flex justify-between items-center mb-4'>
-				<h1 className='text-2xl font-bold'>5G Network Simulator - Roaming</h1>
+				<NavigationBar />
 				<div className='flex space-x-2 items-center'>
 					{statusMessage.type && (
 						<div

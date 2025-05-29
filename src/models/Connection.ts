@@ -21,7 +21,7 @@ const ConnectionSchema = new Schema<IConnection & Document>(
 		},
 		protocol: {
 			type: String,
-			enum: ['N1', 'N2', 'N3', 'N4', 'N6', 'N8', 'N9', 'N10', 'N11', 'N12', 'N13', 'N14', 'N15', 'N32'],
+			enum: ['N1', 'N2', 'N3', 'N4', 'N6', 'N8', 'N9', 'N10', 'N11', 'N12', 'N13', 'N14', 'N15', 'N27', 'N32', 'SBI'],
 			required: true,
 		},
 		status: {

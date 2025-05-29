@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 export default function Home() {
 	return (
-		<div className='grid min-h-screen items-center justify-items-center p-8 pb-20 gap-8 sm:p-20'>
+		<div className='min-h-screen max-w-6xl w-full flex flex-col mx-auto items-start justify-between p-8'>
 			<header className='w-full py-4 flex justify-between items-center'>
 				<h1 className='text-2xl font-bold'>5G Network Simulator</h1>
 				<nav>
@@ -26,19 +26,8 @@ export default function Home() {
 				</nav>
 			</header>
 
-			<main className='w-full max-w-4xl'>
+			<main className='w-full'>
 				<div className='bg-white dark:bg-gray-800 shadow-md rounded-lg p-8 mb-10'>
-					<div className='flex items-center justify-center mb-8'>
-						<Image
-							src='/5g-logo.svg'
-							alt='5G Network Simulator'
-							width={200}
-							height={100}
-							priority
-							className='h-24 w-auto'
-						/>
-					</div>
-
 					<h2 className='text-3xl font-bold mb-6 text-center'>5G Network Simulator</h2>
 
 					<p className='text-lg mb-8 text-center'>
@@ -46,30 +35,19 @@ export default function Home() {
 						mechanisms.
 					</p>
 
-					<div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
+					<div className='flex gap-6 w-full'>
 						<FeatureCard
 							title='Network Visualization'
 							description='Interactive visualization of 5G network functions and their connections'
 							icon='🌐'
+							link='/simulator'
 						/>
 						<FeatureCard
-							title='Protocol Simulation'
-							description='Simulate key 5G protocols including authentication and session establishment'
-							icon='📊'
+							title='Subscriber Registration'
+							description='Manage subscribers registration on home PLMN'
+							icon='👤'
+							link='/subscribers'
 						/>
-						<FeatureCard
-							title='Security Analysis'
-							description='Analyze and understand 5G security mechanisms and key hierarchies'
-							icon='🔒'
-						/>
-					</div>
-
-					<div className='mt-10 flex justify-center'>
-						<Link
-							href='/simulator'
-							className='bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg transition duration-300'>
-							Launch Simulator
-						</Link>
 					</div>
 				</div>
 
@@ -87,7 +65,7 @@ export default function Home() {
 				</div>
 			</main>
 
-			<footer className='w-full max-w-4xl py-6 text-center border-t'>
+			<footer className='w-full text-center border-t'>
 				<p className='text-sm text-gray-600'>
 					5G Network Simulator &copy; {new Date().getFullYear()} - Built with Next.js
 				</p>
@@ -96,12 +74,24 @@ export default function Home() {
 	);
 }
 
-function FeatureCard({ title, description, icon }: { title: string; description: string; icon: string }) {
+function FeatureCard({
+	title,
+	description,
+	icon,
+	link,
+}: {
+	title: string;
+	description: string;
+	icon: string;
+	link: string;
+}) {
 	return (
-		<div className='bg-gray-50 dark:bg-gray-700 p-6 rounded-lg shadow-sm'>
+		<Link
+			href={link}
+			className='bg-gray-50 hover:bg-gray-100 dark:bg-gray-700 p-6 rounded-lg shadow-sm w-full'>
 			<div className='text-4xl mb-4'>{icon}</div>
 			<h3 className='font-bold text-lg mb-2'>{title}</h3>
 			<p className='text-gray-600 dark:text-gray-300'>{description}</p>
-		</div>
+		</Link>
 	);
 }
