@@ -1,8 +1,5 @@
-import React from 'react';
 import ManageDashboard from './_components/ManageDashboard';
 
-const page = () => {
+export default function SubscribersPage() {
 	return <ManageDashboard />;
-};
-
-export default page;
+}

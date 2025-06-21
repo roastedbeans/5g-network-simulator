@@ -1,0 +1,139 @@
+{
+	"setupGuides": {
+		"title": "Setup Guides",
+		"scriptsReference": "Scripts Reference",
+		"automatedSetup": {
+			"title": "Automated Setup",
+			"description": "One-command deployment for quick testing",
+			"bestFor": "First-time users, demos",
+			"steps": {
+				"clone": "Clone repository",
+				"navigate": "Navigate to repository",
+				"install": "Install dependencies and run complete setup",
+				"deploy": "Deploy roaming (HPLMN and VPLMN)"
+			}
+		},
+		"prerequisites": {
+			"title": "Prerequisites",
+			"systemRequirements": "System Requirements",
+			"accessRequirements": "Access Requirements",
+			"ubuntu": "Ubuntu 22.04 LTS",
+			"ram": "Minimum 8GB RAM",
+			"storage": "50GB storage",
+			"cpu": "4 CPU cores",
+			"rootAccess": "Root/sudo access",
+			"internet": "Internet connectivity",
+			"dockerAccess": "Docker Hub access"
+		},
+		"stepsOverview": "Steps Overview",
+		"commands": "Commands",
+		"step": "Step",
+		"cliCapabilities": "CLI Additional Capabilities",
+		"subscriberManagement": "Subscriber management",
+		"podMonitoring": "Pod restart and monitoring",
+		"pcapManagement": "PCAP file management",
+		"webuiDeployment": "WebUI deployment",
+		"certificateManagement": "Certificate management",
+		"cleanupOperations": "Cleanup operations",
+		"helpTip": "💡 Run ./cli.sh help to see all available commands and options",
+		"verification": "Verification",
+		"afterDeployment": {
+			"title": "After Deployment",
+			"accessServices": "Access Services",
+			"quickStatusCheck": "Quick Status Check",
+			"subscriberCount": "Subscriber Count",
+			"checkAllPods": "Check all pods status",
+			"viewTotalSubscribers": "View total subscribers",
+			"webui": "WebUI",
+			"networkui": "NetworkUI",
+			"mongodb": "MongoDB"
+		},
+		"buttons": {
+			"troubleshootingGuide": "Troubleshooting Guide",
+			"scriptsReference": "Scripts Reference",
+			"kubernetesGuide": "Kubernetes Guide",
+			"cliCommandReference": "CLI Command Reference"
+		},
+		"scripts": {
+			"title": "Available Scripts",
+			"overview": "The Open5GS deployment includes {count} scripts organized by category. Most operations can be performed through the main CLI interface (cli.sh), but individual scripts are also available for direct use.",
+			"category": "Category",
+			"scriptsCount": "{count} scripts",
+			"clickToNavigate": "Click to navigate →",
+			"script": "script",
+			"scripts": "scripts",
+			"backToOverview": "Back to Overview",
+			"useCase": "Use Case:",
+			"usage": "Usage:",
+			"example": "Example:",
+			"availableCommands": "Available Commands/Options:",
+			"categories": {
+				"Core": "Core",
+				"Database": "Database",
+				"Setup": "Setup",
+				"Monitoring": "Monitoring",
+				"Management": "Management",
+				"Docker Images": "Docker Images",
+				"Deployment": "Deployment",
+				"UI": "UI",
+				"DNS": "DNS",
+				"Security": "Security",
+				"Debug": "Debug",
+				"Cleanup": "Cleanup"
+			},
+			"quickReference": {
+				"title": "Quick Reference",
+				"mostCommon": "Most Common Commands",
+				"fullSetup": "Full setup",
+				"checkStatus": "Check status",
+				"addSubscribers": "Add subscribers",
+				"restartPods": "Restart all pods",
+				"directScriptAccess": "Direct Script Access",
+				"scriptsDirectory": "All scripts are in ./scripts/ directory",
+				"makeExecutable": "Make scripts executable: chmod +x *.sh",
+				"viewHelp": "View help: ./script.sh --help",
+				"useCli": "Use CLI wrapper for most operations"
+			}
+		}
+	},
+	"navigation": {
+		"home": "Home",
+		"simulator": "Simulator",
+		"documentation": "Documentation",
+		"subscribers": "Subscribers"
+	},
+	"home": {
+		"hero": {
+			"title": "5G UE Registration & Setup",
+			"subtitle": "Complete guide for User Equipment registration in 5G networks with Open5GS. Learn how to configure subscribers, manage authentication, and establish secure connections.",
+			"learnMore": "Setup Guide",
+			"registerUE": "Register UE"
+		},
+		"features": {
+			"ueRegistration": {
+				"title": "UE Registration",
+				"description": "Step-by-step guide for registering User Equipment in 5G networks, including IMSI configuration and subscriber management."
+			},
+			"setupGuides": {
+				"title": "Setup Guides",
+				"description": "Comprehensive documentation for Open5GS deployment, network configuration, and UE connectivity troubleshooting."
+			}
+		},
+
+		"status": "📱 Ready for UE Registration - 5G Core Network Online"
+	},
+	"common": {
+		"copy": "Copy",
+		"close": "Close",
+		"open": "Open",
+		"save": "Save",
+		"cancel": "Cancel",
+		"delete": "Delete",
+		"edit": "Edit",
+		"loading": "Loading...",
+		"error": "Error",
+		"success": "Success",
+		"warning": "Warning",
+		"info": "Info"
+	}
+}

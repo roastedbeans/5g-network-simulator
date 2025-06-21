@@ -1,0 +1,139 @@
+{
+	"setupGuides": {
+		"title": "설정 가이드",
+		"scriptsReference": "스크립트 참조",
+		"automatedSetup": {
+			"title": "자동 설정",
+			"description": "빠른 테스트를 위한 원-커맨드 배포",
+			"bestFor": "초보 사용자, 데모",
+			"steps": {
+				"clone": "저장소 복제",
+				"navigate": "저장소로 이동",
+				"install": "의존성 설치 및 완전 설정 실행",
+				"deploy": "로밍 배포 (HPLMN 및 VPLMN)"
+			}
+		},
+		"prerequisites": {
+			"title": "전제 조건",
+			"systemRequirements": "시스템 요구사항",
+			"accessRequirements": "액세스 요구사항",
+			"ubuntu": "Ubuntu 22.04 LTS",
+			"ram": "최소 8GB RAM",
+			"storage": "50GB 저장소",
+			"cpu": "4 CPU 코어",
+			"rootAccess": "Root/sudo 액세스",
+			"internet": "인터넷 연결",
+			"dockerAccess": "Docker Hub 액세스"
+		},
+		"stepsOverview": "단계 개요",
+		"commands": "명령어",
+		"step": "단계",
+		"cliCapabilities": "CLI 추가 기능",
+		"subscriberManagement": "가입자 관리",
+		"podMonitoring": "파드 재시작 및 모니터링",
+		"pcapManagement": "PCAP 파일 관리",
+		"webuiDeployment": "WebUI 배포",
+		"certificateManagement": "인증서 관리",
+		"cleanupOperations": "정리 작업",
+		"helpTip": "💡 ./cli.sh help 명령어로 사용 가능한 모든 명령어와 옵션을 확인하세요",
+		"verification": "검증",
+		"afterDeployment": {
+			"title": "배포 후",
+			"accessServices": "서비스 액세스",
+			"quickStatusCheck": "빠른 상태 확인",
+			"subscriberCount": "가입자 수",
+			"checkAllPods": "모든 파드 상태 확인",
+			"viewTotalSubscribers": "총 가입자 수 보기",
+			"webui": "WebUI",
+			"networkui": "NetworkUI",
+			"mongodb": "MongoDB"
+		},
+		"buttons": {
+			"troubleshootingGuide": "문제 해결 가이드",
+			"scriptsReference": "스크립트 참조",
+			"kubernetesGuide": "Kubernetes 가이드",
+			"cliCommandReference": "CLI 명령어 참조"
+		},
+		"scripts": {
+			"title": "사용 가능한 스크립트",
+			"overview": "Open5GS 배포에는 카테고리별로 정리된 {count}개의 스크립트가 포함되어 있습니다. 대부분의 작업은 메인 CLI 인터페이스(cli.sh)를 통해 수행할 수 있지만, 개별 스크립트도 직접 사용할 수 있습니다.",
+			"category": "카테고리",
+			"scriptsCount": "{count}개 스크립트",
+			"clickToNavigate": "이동하려면 클릭 →",
+			"script": "스크립트",
+			"scripts": "스크립트",
+			"backToOverview": "개요로 돌아가기",
+			"useCase": "사용 사례:",
+			"usage": "사용법:",
+			"example": "예시:",
+			"availableCommands": "사용 가능한 명령어/옵션:",
+			"categories": {
+				"Core": "핵심",
+				"Database": "데이터베이스",
+				"Setup": "설정",
+				"Monitoring": "모니터링",
+				"Management": "관리",
+				"Docker Images": "Docker 이미지",
+				"Deployment": "배포",
+				"UI": "UI",
+				"DNS": "DNS",
+				"Security": "보안",
+				"Debug": "디버그",
+				"Cleanup": "정리"
+			},
+			"quickReference": {
+				"title": "빠른 참조",
+				"mostCommon": "가장 일반적인 명령어",
+				"fullSetup": "전체 설정",
+				"checkStatus": "상태 확인",
+				"addSubscribers": "가입자 추가",
+				"restartPods": "모든 파드 재시작",
+				"directScriptAccess": "직접 스크립트 액세스",
+				"scriptsDirectory": "모든 스크립트는 ./scripts/ 디렉토리에 있습니다",
+				"makeExecutable": "스크립트 실행 가능하게 만들기: chmod +x *.sh",
+				"viewHelp": "도움말 보기: ./script.sh --help",
+				"useCli": "대부분의 작업에 CLI 래퍼 사용"
+			}
+		}
+	},
+	"navigation": {
+		"home": "홈",
+		"simulator": "시뮬레이터",
+		"documentation": "문서",
+		"subscribers": "가입자"
+	},
+	"home": {
+		"hero": {
+			"title": "5G UE 등록 및 설정",
+			"subtitle": "Open5GS를 사용한 5G 네트워크에서의 사용자 단말(UE) 등록 완전 가이드. 가입자 구성, 인증 관리 및 보안 연결 설정 방법을 학습하세요.",
+			"learnMore": "설정 가이드",
+			"registerUE": "UE 등록"
+		},
+		"features": {
+			"ueRegistration": {
+				"title": "UE 등록",
+				"description": "IMSI 구성 및 가입자 관리를 포함한 5G 네트워크에서 사용자 단말 등록을 위한 단계별 가이드입니다."
+			},
+			"setupGuides": {
+				"title": "설정 가이드",
+				"description": "Open5GS 배포, 네트워크 구성 및 UE 연결 문제 해결을 위한 포괄적인 문서입니다."
+			}
+		},
+
+		"status": "📱 UE 등록 준비 완료 - 5G 코어 네트워크 온라인"
+	},
+	"common": {
+		"copy": "복사",
+		"close": "닫기",
+		"open": "열기",
+		"save": "저장",
+		"cancel": "취소",
+		"delete": "삭제",
+		"edit": "편집",
+		"loading": "로딩 중...",
+		"error": "오류",
+		"success": "성공",
+		"warning": "경고",
+		"info": "정보"
+	}
+}

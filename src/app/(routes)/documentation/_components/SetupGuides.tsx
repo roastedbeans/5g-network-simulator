@@ -1,5 +1,6 @@
 'use client';
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Zap, Settings, Terminal, Clock, User, CheckCircle, Copy, ExternalLink, FileText, Play } from 'lucide-react';
 
 const SetupGuides = () => {
+	const t = useTranslations('setupGuides');
 	const [selectedTab, setSelectedTab] = useState('setup');
 	const [activeSection, setActiveSection] = useState<string | null>(null);
 
@@ -18,15 +20,15 @@ const SetupGuides = () => {
 
 	const automatedSetup = {
 		id: 'automated',
-		title: 'Automated Setup',
+		title: t('automatedSetup.title'),
 		icon: Zap,
-		bestFor: 'First-time users, demos',
-		description: 'One-command deployment for quick testing',
+		bestFor: t('automatedSetup.bestFor'),
+		description: t('automatedSetup.description'),
 		steps: [
-			'Clone repository',
-			'Navigate to repository',
-			'Install dependencies and run complete setup',
-			'Deploy roaming (HPLMN and VPLMN)',
+			t('automatedSetup.steps.clone'),
+			t('automatedSetup.steps.navigate'),
+			t('automatedSetup.steps.install'),
+			t('automatedSetup.steps.deploy'),
 		],
 		commands: [
 			'git clone https://github.com/roastedbeans/open5gs-roaming.git',
@@ -40,7 +42,7 @@ const SetupGuides = () => {
 		{
 			name: 'cli.sh',
 			description: 'Main CLI interface for all Open5GS operations',
-			category: 'Core',
+			category: t('scripts.categories.Core'),
 			icon: Terminal,
 			usage: './cli.sh [command] [options]',
 			useCase: 'Primary interface for all 5G network operations - from initial setup to daily management',
@@ -67,7 +69,7 @@ const SetupGuides = () => {
 		{
 			name: 'subscribers.sh',
 			description: 'Direct subscriber database management',
-			category: 'Database',
+			category: t('scripts.categories.Database'),
 			icon: User,
 			usage: './subscribers.sh [command] [options]',
 			useCase: 'Manage subscriber database directly - add test users, bulk operations, cleanup',
@@ -83,7 +85,7 @@ const SetupGuides = () => {
 		{
 			name: 'setup-k8s-roaming.sh',
 			description: 'Complete Kubernetes roaming setup with dependencies',
-			category: 'Setup',
+			category: t('scripts.categories.Setup'),
 			icon: Settings,
 			usage: './setup-k8s-roaming.sh [tag]',
 			useCase: 'One-command setup for complete 5G roaming environment from scratch',
@@ -99,7 +101,7 @@ const SetupGuides = () => {
 		{
 			name: 'install-dep.sh',
 			description: 'Install system dependencies',
-			category: 'Setup',
+			category: t('scripts.categories.Setup'),
 			icon: Settings,
 			usage: './install-dep.sh',
 			useCase: 'Install required system packages before setting up Open5GS',
@@ -109,7 +111,7 @@ const SetupGuides = () => {
 		{
 			name: 'get-status.sh',
 			description: 'Show detailed status of Open5GS deployments',
-			category: 'Monitoring',
+			category: t('scripts.categories.Monitoring'),
 			icon: CheckCircle,
 			usage: './get-status.sh [-n namespace] [-d]',
 			useCase: 'Monitor deployment health, troubleshoot pod issues, verify service status',
@@ -123,7 +125,7 @@ const SetupGuides = () => {
 		{
 			name: 'restart-pods.sh',
 			description: 'Restart Kubernetes pods by namespace',
-			category: 'Management',
+			category: t('scripts.categories.Management'),
 			icon: Play,
 			usage: './restart-pods.sh [options]',
 			useCase: 'Restart pods when configuration changes or troubleshooting connectivity issues',
@@ -140,7 +142,7 @@ const SetupGuides = () => {
 		{
 			name: 'pull-docker-images.sh',
 			description: 'Pull Open5GS Docker images from registry',
-			category: 'Docker Images',
+			category: t('scripts.categories.Docker Images'),
 			icon: Copy,
 			usage: './pull-docker-images.sh [options]',
 			useCase: 'Update to latest Open5GS images or pull specific versions for testing',
@@ -156,7 +158,7 @@ const SetupGuides = () => {
 		{
 			name: 'kubectl-deploy-hplmn.sh',
 			description: 'Deploy HPLMN (Home PLMN) components',
-			category: 'Deployment',
+			category: t('scripts.categories.Deployment'),
 			icon: Zap,
 			usage: './kubectl-deploy-hplmn.sh',
 			useCase: 'Deploy home network components for subscriber authentication and management',
@@ -171,7 +173,7 @@ const SetupGuides = () => {
 		{
 			name: 'kubectl-deploy-vplmn.sh',
 			description: 'Deploy VPLMN (Visited PLMN) components',
-			category: 'Deployment',
+			category: t('scripts.categories.Deployment'),
 			icon: Zap,
 			usage: './kubectl-deploy-vplmn.sh',
 			useCase: 'Deploy visited network components for roaming scenarios and inter-PLMN communication',
@@ -186,7 +188,7 @@ const SetupGuides = () => {
 		{
 			name: 'kubectl-deploy-webui.sh',
 			description: 'Deploy Open5GS WebUI for subscriber management',
-			category: 'UI',
+			category: t('scripts.categories.UI'),
 			icon: ExternalLink,
 			usage: './kubectl-deploy-webui.sh',
 			useCase: 'Access web interface for subscriber management and network configuration',
@@ -201,7 +203,7 @@ const SetupGuides = () => {
 		{
 			name: 'kubectl-deploy-networkui.sh',
 			description: 'Deploy NetworkUI for network monitoring',
-			category: 'UI',
+			category: t('scripts.categories.UI'),
 			icon: ExternalLink,
 			usage: './kubectl-deploy-networkui.sh',
 			useCase: 'Monitor network topology and visualize 5G network function connections',
@@ -216,7 +218,7 @@ const SetupGuides = () => {
 		{
 			name: 'coredns-rewrite.sh',
 			description: 'Configure CoreDNS rewrite rules for 3GPP names',
-			category: 'DNS',
+			category: t('scripts.categories.DNS'),
 			icon: Settings,
 			usage: './coredns-rewrite.sh [options]',
 			useCase: 'Configure DNS resolution for 3GPP FQDN names in roaming scenarios',
@@ -234,7 +236,7 @@ const SetupGuides = () => {
 		{
 			name: 'cert-deploy.sh',
 			description: 'Deploy TLS certificates as Kubernetes secrets',
-			category: 'Security',
+			category: t('scripts.categories.Security'),
 			icon: CheckCircle,
 			usage: './cert-deploy.sh',
 			useCase: 'Deploy SEPP TLS certificates for secure inter-PLMN communication',
@@ -250,7 +252,7 @@ const SetupGuides = () => {
 		{
 			name: 'copy-pcap.sh',
 			description: 'Copy PCAP files from SEPP pods for analysis',
-			category: 'Debug',
+			category: t('scripts.categories.Debug'),
 			icon: FileText,
 			usage: './copy-pcap.sh [options]',
 			useCase: 'Extract network traffic captures for protocol analysis and debugging',
@@ -267,7 +269,7 @@ const SetupGuides = () => {
 		{
 			name: 'pcap-capture.sh',
 			description: 'Extract PCAP files from SEPP pods (standalone)',
-			category: 'Debug',
+			category: t('scripts.categories.Debug'),
 			icon: FileText,
 			usage: './pcap-capture.sh',
 			useCase: 'Simple PCAP extraction tool for quick network traffic analysis',
@@ -283,7 +285,7 @@ const SetupGuides = () => {
 		{
 			name: 'update.sh',
 			description: 'Update deployment files for MicroK8s registry',
-			category: 'Management',
+			category: t('scripts.categories.Management'),
 			icon: Settings,
 			usage: './update.sh',
 			useCase: 'Modify deployment files to use local MicroK8s registry instead of external registry',
@@ -299,7 +301,7 @@ const SetupGuides = () => {
 		{
 			name: 'import.sh',
 			description: 'Import Docker images to MicroK8s registry',
-			category: 'Docker Images',
+			category: t('scripts.categories.Docker Images'),
 			icon: Copy,
 			usage: './import.sh',
 			useCase: 'Transfer Docker images from local Docker to MicroK8s registry for offline deployment',
@@ -314,7 +316,7 @@ const SetupGuides = () => {
 		{
 			name: 'docker-deploy.sh',
 			description: 'Deploy using Docker Compose alternative',
-			category: 'Deployment',
+			category: t('scripts.categories.Deployment'),
 			icon: Zap,
 			usage: './docker-deploy.sh',
 			useCase: 'Quick local testing with Docker Compose instead of Kubernetes',
@@ -329,7 +331,7 @@ const SetupGuides = () => {
 		{
 			name: 'docker-clean.sh',
 			description: 'Clean Docker images and containers',
-			category: 'Cleanup',
+			category: t('scripts.categories.Cleanup'),
 			icon: Settings,
 			usage: './docker-clean.sh',
 			useCase: 'Free up disk space by removing unused Docker resources',
@@ -345,7 +347,7 @@ const SetupGuides = () => {
 		{
 			name: 'microk8s-clean.sh',
 			description: 'Clean MicroK8s resources and cache',
-			category: 'Cleanup',
+			category: t('scripts.categories.Cleanup'),
 			icon: Settings,
 			usage: './microk8s-clean.sh',
 			useCase: 'Clean up MicroK8s environment and reset to fresh state',
@@ -396,8 +398,8 @@ const SetupGuides = () => {
 				onValueChange={setSelectedTab}
 				className='w-full'>
 				<TabsList className='grid w-full grid-cols-2'>
-					<TabsTrigger value='setup'>Setup Guide</TabsTrigger>
-					<TabsTrigger value='scripts'>Scripts Reference</TabsTrigger>
+					<TabsTrigger value='setup'>{t('title')}</TabsTrigger>
+					<TabsTrigger value='scripts'>{t('scriptsReference')}</TabsTrigger>
 				</TabsList>
 
 				<TabsContent
@@ -427,25 +429,25 @@ const SetupGuides = () => {
 					{/* Prerequisites */}
 					<Card>
 						<CardHeader>
-							<h3 className='text-lg font-semibold'>Prerequisites</h3>
+							<h3 className='text-lg font-semibold'>{t('prerequisites.title')}</h3>
 						</CardHeader>
 						<CardContent className='space-y-3'>
 							<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 								<div>
-									<h4 className='font-medium mb-2'>System Requirements</h4>
+									<h4 className='font-medium mb-2'>{t('prerequisites.systemRequirements')}</h4>
 									<ul className='space-y-1 text-sm text-muted-foreground'>
-										<li>• Ubuntu 22.04 LTS</li>
-										<li>• Minimum 8GB RAM</li>
-										<li>• 50GB storage</li>
-										<li>• 4 CPU cores</li>
+										<li>• {t('prerequisites.ubuntu')}</li>
+										<li>• {t('prerequisites.ram')}</li>
+										<li>• {t('prerequisites.storage')}</li>
+										<li>• {t('prerequisites.cpu')}</li>
 									</ul>
 								</div>
 								<div>
-									<h4 className='font-medium mb-2'>Access Requirements</h4>
+									<h4 className='font-medium mb-2'>{t('prerequisites.accessRequirements')}</h4>
 									<ul className='space-y-1 text-sm text-muted-foreground'>
-										<li>• Root/sudo access</li>
-										<li>• Internet connectivity</li>
-										<li>• Docker Hub access</li>
+										<li>• {t('prerequisites.rootAccess')}</li>
+										<li>• {t('prerequisites.internet')}</li>
+										<li>• {t('prerequisites.dockerAccess')}</li>
 									</ul>
 								</div>
 							</div>
@@ -463,7 +465,7 @@ const SetupGuides = () => {
 						<CardContent className='space-y-6'>
 							{/* Steps Overview */}
 							<div>
-								<h4 className='font-medium mb-3'>Steps Overview</h4>
+								<h4 className='font-medium mb-3'>{t('stepsOverview')}</h4>
 								<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3'>
 									{automatedSetup.steps.map((step, index) => (
 										<div
@@ -482,14 +484,16 @@ const SetupGuides = () => {
 
 							{/* Commands */}
 							<div>
-								<h4 className='font-medium mb-3'>Commands</h4>
+								<h4 className='font-medium mb-3'>{t('commands')}</h4>
 								<div className='space-y-3'>
 									{automatedSetup.commands.map((command, index) => (
 										<div
 											key={index}
 											className='space-y-2'>
 											<div className='flex items-center gap-2'>
-												<span className='text-sm font-medium text-muted-foreground'>Step {index + 1}:</span>
+												<span className='text-sm font-medium text-muted-foreground'>
+													{t('step')} {index + 1}:
+												</span>
 												<span className='text-sm text-muted-foreground'>{automatedSetup.steps[index]}</span>
 											</div>
 											<div className='flex items-center gap-2'>
@@ -510,47 +514,45 @@ const SetupGuides = () => {
 
 							{/* CLI Capabilities */}
 							<div>
-								<h4 className='font-medium mb-3'>CLI Additional Capabilities</h4>
+								<h4 className='font-medium mb-3'>{t('cliCapabilities')}</h4>
 								<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 									<div className='space-y-2'>
 										<div className='flex items-center gap-2'>
 											<CheckCircle className='w-4 h-4 text-green-600' />
-											<span className='text-sm'>Subscriber management</span>
+											<span className='text-sm'>{t('subscriberManagement')}</span>
 										</div>
 										<div className='flex items-center gap-2'>
 											<CheckCircle className='w-4 h-4 text-green-600' />
-											<span className='text-sm'>Pod restart and monitoring</span>
+											<span className='text-sm'>{t('podMonitoring')}</span>
 										</div>
 										<div className='flex items-center gap-2'>
 											<CheckCircle className='w-4 h-4 text-green-600' />
-											<span className='text-sm'>PCAP file management</span>
+											<span className='text-sm'>{t('pcapManagement')}</span>
 										</div>
 									</div>
 									<div className='space-y-2'>
 										<div className='flex items-center gap-2'>
 											<CheckCircle className='w-4 h-4 text-green-600' />
-											<span className='text-sm'>WebUI deployment</span>
+											<span className='text-sm'>{t('webuiDeployment')}</span>
 										</div>
 										<div className='flex items-center gap-2'>
 											<CheckCircle className='w-4 h-4 text-green-600' />
-											<span className='text-sm'>Certificate management</span>
+											<span className='text-sm'>{t('certificateManagement')}</span>
 										</div>
 										<div className='flex items-center gap-2'>
 											<CheckCircle className='w-4 h-4 text-green-600' />
-											<span className='text-sm'>Cleanup operations</span>
+											<span className='text-sm'>{t('cleanupOperations')}</span>
 										</div>
 									</div>
 								</div>
 								<div className='mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200'>
-									<p className='text-sm text-blue-700'>
-										💡 Run <Code>./cli.sh help</Code> to see all available commands and options
-									</p>
+									<p className='text-sm text-blue-700'>{t('helpTip')}</p>
 								</div>
 							</div>
 
 							{/* Verification */}
 							<div>
-								<h4 className='font-medium mb-3'>Verification</h4>
+								<h4 className='font-medium mb-3'>{t('verification')}</h4>
 								<div className='space-y-2'>
 									<div className='flex items-center gap-2'>
 										<Code className='flex-1 p-3 rounded-lg bg-muted'>./cli.sh get-status</Code>
@@ -587,27 +589,27 @@ const SetupGuides = () => {
 					{/* After Deployment */}
 					<Card>
 						<CardHeader>
-							<h3 className='text-lg font-semibold'>After Deployment</h3>
+							<h3 className='text-lg font-semibold'>{t('afterDeployment.title')}</h3>
 						</CardHeader>
 						<CardContent className='space-y-4'>
 							<div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
 								<div>
-									<h4 className='font-medium mb-2'>Access Services</h4>
+									<h4 className='font-medium mb-2'>{t('afterDeployment.accessServices')}</h4>
 									<ul className='space-y-1 text-sm'>
-										<li>• WebUI: http://NODE_IP:30999</li>
-										<li>• NetworkUI: http://NODE_IP:30998</li>
-										<li>• MongoDB: NODE_IP:30017</li>
+										<li>• {t('afterDeployment.webui')}: http://NODE_IP:30999</li>
+										<li>• {t('afterDeployment.networkui')}: http://NODE_IP:30998</li>
+										<li>• {t('afterDeployment.mongodb')}: NODE_IP:30017</li>
 									</ul>
 								</div>
 								<div>
-									<h4 className='font-medium mb-2'>Quick Status Check</h4>
+									<h4 className='font-medium mb-2'>{t('afterDeployment.quickStatusCheck')}</h4>
 									<Code className='text-xs mb-1'>./cli.sh get-status</Code>
-									<p className='text-xs text-muted-foreground'>Check all pods status</p>
+									<p className='text-xs text-muted-foreground'>{t('afterDeployment.checkAllPods')}</p>
 								</div>
 								<div>
-									<h4 className='font-medium mb-2'>Subscriber Count</h4>
+									<h4 className='font-medium mb-2'>{t('afterDeployment.subscriberCount')}</h4>
 									<Code className='text-xs mb-1'>./cli.sh subscribers count</Code>
-									<p className='text-xs text-muted-foreground'>View total subscribers</p>
+									<p className='text-xs text-muted-foreground'>{t('afterDeployment.viewTotalSubscribers')}</p>
 								</div>
 							</div>
 
@@ -619,28 +621,28 @@ const SetupGuides = () => {
 									size='sm'
 									className='flex items-center gap-2'>
 									<ExternalLink className='w-4 h-4' />
-									Troubleshooting Guide
+									{t('buttons.troubleshootingGuide')}
 								</Button>
 								<Button
 									variant='outline'
 									size='sm'
 									className='flex items-center gap-2'>
 									<ExternalLink className='w-4 h-4' />
-									Scripts Reference
+									{t('buttons.scriptsReference')}
 								</Button>
 								<Button
 									variant='outline'
 									size='sm'
 									className='flex items-center gap-2'>
 									<ExternalLink className='w-4 h-4' />
-									Kubernetes Guide
+									{t('buttons.kubernetesGuide')}
 								</Button>
 								<Button
 									variant='outline'
 									size='sm'
 									className='flex items-center gap-2'>
 									<Terminal className='w-4 h-4' />
-									CLI Command Reference
+									{t('buttons.cliCommandReference')}
 								</Button>
 							</div>
 						</CardContent>
@@ -655,15 +657,11 @@ const SetupGuides = () => {
 						<CardHeader>
 							<div className='flex items-center gap-3'>
 								<Terminal className='w-6 h-6 text-primary' />
-								<h3 className='text-xl font-semibold'>Available Scripts</h3>
+								<h3 className='text-xl font-semibold'>{t('scripts.title')}</h3>
 							</div>
 						</CardHeader>
 						<CardContent>
-							<p className='text-muted-foreground mb-4'>
-								The Open5GS deployment includes {scripts.length} scripts organized by category. Most operations can be
-								performed through the main CLI interface (cli.sh), but individual scripts are also available for direct
-								use.
-							</p>
+							<p className='text-muted-foreground mb-4'>{t('scripts.overview', { count: scripts.length })}</p>
 							<div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
 								{Object.keys(groupedScripts).map((category) => (
 									<Button
@@ -679,14 +677,14 @@ const SetupGuides = () => {
 										</h4>
 										<p
 											className={`text-xs ${activeSection === category ? 'text-primary/80' : 'text-muted-foreground'}`}>
-											{groupedScripts[category].length} scripts
+											{t('scripts.scriptsCount', { count: groupedScripts[category].length })}
 										</p>
 										<div className='mt-2 flex justify-center'>
 											<span
 												className={`text-xs ${
 													activeSection === category ? 'text-primary/60' : 'text-muted-foreground'
 												}`}>
-												Click to navigate →
+												{t('scripts.clickToNavigate')}
 											</span>
 										</div>
 									</Button>
@@ -702,10 +700,13 @@ const SetupGuides = () => {
 							id={`section-${category}`}>
 							<CardHeader>
 								<div className='flex items-center justify-between'>
-									<h3 className='text-lg font-semibold'>{category} Scripts</h3>
+									<h3 className='text-lg font-semibold'>
+										{category} {t('scripts.scripts')}
+									</h3>
 									<div className='flex items-center gap-3'>
 										<span className='text-xs text-muted-foreground'>
-											{categoryScripts.length} script{categoryScripts.length !== 1 ? 's' : ''}
+											{categoryScripts.length}{' '}
+											{categoryScripts.length !== 1 ? t('scripts.scripts') : t('scripts.script')}
 										</span>
 										{activeSection === category && (
 											<div className='flex items-center gap-2'>
@@ -720,7 +721,7 @@ const SetupGuides = () => {
 															block: 'start',
 														});
 													}}>
-													Back to Overview
+													{t('scripts.backToOverview')}
 												</Button>
 											</div>
 										)}
@@ -745,13 +746,13 @@ const SetupGuides = () => {
 
 													{/* Use Case */}
 													<div className='p-2 bg-blue-50 rounded-lg border-l-2 border-blue-200'>
-														<p className='text-xs font-medium text-blue-700 mb-1'>Use Case:</p>
+														<p className='text-xs font-medium text-blue-700 mb-1'>{t('scripts.useCase')}</p>
 														<p className='text-xs text-blue-600'>{script.useCase}</p>
 													</div>
 
 													{/* Usage */}
 													<div className='flex items-center gap-2'>
-														<span className='text-xs font-medium text-muted-foreground'>Usage:</span>
+														<span className='text-xs font-medium text-muted-foreground'>{t('scripts.usage')}</span>
 														<Code className='text-xs bg-muted px-2 py-1 rounded'>{script.usage}</Code>
 														<Button
 															size='sm'
@@ -763,7 +764,7 @@ const SetupGuides = () => {
 
 													{/* Example */}
 													<div className='flex items-center gap-2'>
-														<span className='text-xs font-medium text-muted-foreground'>Example:</span>
+														<span className='text-xs font-medium text-muted-foreground'>{t('scripts.example')}</span>
 														<Code className='text-xs bg-green-100 px-2 py-1 rounded text-green-800'>
 															{script.example}
 														</Code>
@@ -778,7 +779,7 @@ const SetupGuides = () => {
 											</div>
 
 											<div className='space-y-1'>
-												<h5 className='text-sm font-medium'>Available Commands/Options:</h5>
+												<h5 className='text-sm font-medium'>{t('scripts.availableCommands')}</h5>
 												<div className='grid grid-cols-1 md:grid-cols-2 gap-1'>
 													{script.commands.map((command, index) => (
 														<div
@@ -800,40 +801,38 @@ const SetupGuides = () => {
 					{/* Quick Reference */}
 					<Card>
 						<CardHeader>
-							<h3 className='text-lg font-semibold'>Quick Reference</h3>
+							<h3 className='text-lg font-semibold'>{t('scripts.quickReference.title')}</h3>
 						</CardHeader>
 						<CardContent className='space-y-4'>
 							<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 								<div className='p-3 rounded-lg bg-green-50 border-l-4 border-green-500'>
-									<h5 className='font-medium text-sm text-green-700 mb-2'>Most Common Commands</h5>
+									<h5 className='font-medium text-sm text-green-700 mb-2'>{t('scripts.quickReference.mostCommon')}</h5>
 									<div className='space-y-1 text-xs text-green-600'>
 										<div>
-											<Code className='text-xs'>./cli.sh setup-roaming</Code> - Full setup
+											<Code className='text-xs'>./cli.sh setup-roaming</Code> - {t('scripts.quickReference.fullSetup')}
 										</div>
 										<div>
-											<Code className='text-xs'>./cli.sh get-status</Code> - Check status
+											<Code className='text-xs'>./cli.sh get-status</Code> - {t('scripts.quickReference.checkStatus')}
 										</div>
 										<div>
-											<Code className='text-xs'>./cli.sh subscribers add-range</Code> - Add subscribers
+											<Code className='text-xs'>./cli.sh subscribers add-range</Code> -{' '}
+											{t('scripts.quickReference.addSubscribers')}
 										</div>
 										<div>
-											<Code className='text-xs'>./cli.sh restart-pods -a</Code> - Restart all pods
+											<Code className='text-xs'>./cli.sh restart-pods -a</Code> -{' '}
+											{t('scripts.quickReference.restartPods')}
 										</div>
 									</div>
 								</div>
 								<div className='p-3 rounded-lg bg-blue-50 border-l-4 border-blue-500'>
-									<h5 className='font-medium text-sm text-blue-700 mb-2'>Direct Script Access</h5>
+									<h5 className='font-medium text-sm text-blue-700 mb-2'>
+										{t('scripts.quickReference.directScriptAccess')}
+									</h5>
 									<div className='space-y-1 text-xs text-blue-600'>
-										<div>
-											All scripts are in <Code className='text-xs'>./scripts/</Code> directory
-										</div>
-										<div>
-											Make scripts executable: <Code className='text-xs'>chmod +x *.sh</Code>
-										</div>
-										<div>
-											View help: <Code className='text-xs'>./script.sh --help</Code>
-										</div>
-										<div>Use CLI wrapper for most operations</div>
+										<div>{t('scripts.quickReference.scriptsDirectory')}</div>
+										<div>{t('scripts.quickReference.makeExecutable')}</div>
+										<div>{t('scripts.quickReference.viewHelp')}</div>
+										<div>{t('scripts.quickReference.useCli')}</div>
 									</div>
 								</div>
 							</div>

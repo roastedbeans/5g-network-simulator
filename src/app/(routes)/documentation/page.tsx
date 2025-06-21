@@ -1,4 +1,3 @@
-import React from 'react';
 import SetupGuides from './_components/SetupGuides';
 
 const page = () => {
