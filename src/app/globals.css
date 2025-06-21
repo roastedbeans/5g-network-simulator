@@ -1,17 +1,7 @@
 @import 'tailwindcss';
-@plugin '../../hero.ts';
-@source '../../node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}';
+@import 'tw-animate-css';
 
-:root {
-	--foreground-rgb: 0, 0, 0;
-	--background-rgb: 245, 245, 245;
-}
-
-body {
-	color: rgb(var(--foreground-rgb));
-	background: rgb(var(--background-rgb));
-	min-height: 100vh;
-}
+@custom-variant dark (&:is(.dark *));
 
 /* xyflow theme files. Delete these to start from our base */
 
@@ -144,4 +134,151 @@ body {
 
 .simple-floatingedges .react-flow__handle-right {
 	right: -15px;
+}
+
+@theme inline {
+	--color-background: var(--background);
+	--color-foreground: var(--foreground);
+	--font-sans: var(--font-ibm-plex-sans);
+	--font-serif: var(--font-ibm-plex-serif);
+	--font-mono: var(--font-ibm-plex-mono);
+	--color-sidebar-ring: var(--sidebar-ring);
+	--color-sidebar-border: var(--sidebar-border);
+	--color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+	--color-sidebar-accent: var(--sidebar-accent);
+	--color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+	--color-sidebar-primary: var(--sidebar-primary);
+	--color-sidebar-foreground: var(--sidebar-foreground);
+	--color-sidebar: var(--sidebar);
+	--color-chart-5: var(--chart-5);
+	--color-chart-4: var(--chart-4);
+	--color-chart-3: var(--chart-3);
+	--color-chart-2: var(--chart-2);
+	--color-chart-1: var(--chart-1);
+	--color-ring: var(--ring);
+	--color-input: var(--input);
+	--color-border: var(--border);
+	--color-destructive: var(--destructive);
+	--color-accent-foreground: var(--accent-foreground);
+	--color-accent: var(--accent);
+	--color-muted-foreground: var(--muted-foreground);
+	--color-muted: var(--muted);
+	--color-secondary-foreground: var(--secondary-foreground);
+	--color-secondary: var(--secondary);
+	--color-primary-foreground: var(--primary-foreground);
+	--color-primary: var(--primary);
+	--color-popover-foreground: var(--popover-foreground);
+	--color-popover: var(--popover);
+	--color-card-foreground: var(--card-foreground);
+	--color-card: var(--card);
+	--color-sail-50: var(--color-sail-50);
+	--color-sail-100: var(--color-sail-100);
+	--color-sail-200: var(--color-sail-200);
+	--color-sail-300: var(--color-sail-300);
+	--color-sail-400: var(--color-sail-400);
+	--color-sail-500: var(--color-sail-500);
+	--color-sail-600: var(--color-sail-600);
+	--color-sail-700: var(--color-sail-700);
+	--color-sail-800: var(--color-sail-800);
+	--color-sail-900: var(--color-sail-900);
+	--color-sail-950: var(--color-sail-950);
+	--radius-sm: calc(var(--radius) - 4px);
+	--radius-md: calc(var(--radius) - 2px);
+	--radius-lg: var(--radius);
+	--radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+	--radius: 0.625rem;
+	/* Sail theme - Light mode */
+	--card: oklch(1 0 0); /* Sail 50 */
+	--card-foreground: oklch(0.13 0.028 261.692); /* Sail 950 */
+	--popover: oklch(1 0 0); /* Sail 50 */
+	--popover-foreground: oklch(0.13 0.028 261.692); /* Sail 950 */
+	--primary: oklch(0.21 0.034 264.665); /* Sail 600 */
+	--primary-foreground: oklch(0.985 0.002 247.839); /* Sail 50 */
+	--secondary: oklch(0.967 0.003 264.542); /* Sail 100 */
+	--secondary-foreground: oklch(0.21 0.034 264.665); /* Sail 900 */
+	--muted: oklch(0.967 0.003 264.542); /* Sail 100 */
+	--muted-foreground: oklch(0.551 0.027 264.364); /* Sail 700 */
+	--accent: oklch(0.967 0.003 264.542); /* Sail 200 */
+	--accent-foreground: oklch(0.21 0.034 264.665); /* Sail 900 */
+	--destructive: oklch(0.577 0.245 27.325); /* Red 60 (#da1e28) */
+	--border: oklch(0.928 0.006 264.531); /* Sail 200 */
+	--input: oklch(0.928 0.006 264.531); /* Sail 200 */
+	--ring: oklch(0.707 0.022 261.325); /* Sail 600 */
+	--chart-1: oklch(0.646 0.222 41.116); /* Sail 600 */
+	--chart-2: oklch(0.6 0.118 184.704); /* Sail 500 */
+	--chart-3: oklch(0.398 0.07 227.392); /* Sail 400 */
+	--chart-4: oklch(0.828 0.189 84.429); /* Sail 700 */
+	--chart-5: oklch(0.769 0.188 70.08); /* Sail 800 */
+	--sidebar: oklch(0.985 0.002 247.839); /* Sail 50 */
+	--sidebar-foreground: oklch(0.13 0.028 261.692); /* Sail 950 */
+	--sidebar-primary: oklch(0.21 0.034 264.665); /* Sail 600 */
+	--sidebar-primary-foreground: oklch(0.985 0.002 247.839); /* Sail 50 */
+	--sidebar-accent: oklch(0.967 0.003 264.542); /* Sail 100 */
+	--sidebar-accent-foreground: oklch(0.21 0.034 264.665); /* Sail 900 */
+	--sidebar-border: oklch(0.928 0.006 264.531); /* Sail 200 */
+	--sidebar-ring: oklch(0.707 0.022 261.325); /* Sail 600 */
+	--color-sail-50: #eff7ff;
+	--color-sail-100: #daedff;
+	--color-sail-200: #bee1ff;
+	--color-sail-300: #a3d7ff;
+	--color-sail-400: #5db4fd;
+	--color-sail-500: #3793fa;
+	--color-sail-600: #2175ef;
+	--color-sail-700: #195edc;
+	--color-sail-800: #1b4db2;
+	--color-sail-900: #1c438c;
+	--color-sail-950: #162a55;
+	--background: oklch(1 0 0);
+	--foreground: oklch(0.13 0.028 261.692);
+}
+
+.dark {
+	/* Sail theme - Dark mode */
+	--background: oklch(0.13 0.028 261.692); /* Sail 950 */
+	--foreground: oklch(0.985 0.002 247.839); /* Sail 50 */
+	--card: oklch(0.21 0.034 264.665); /* Sail 900 */
+	--card-foreground: oklch(0.985 0.002 247.839); /* Sail 50 */
+	--popover: oklch(0.21 0.034 264.665); /* Sail 900 */
+	--popover-foreground: oklch(0.985 0.002 247.839); /* Sail 50 */
+	--primary: oklch(0.928 0.006 264.531); /* Sail 500 */
+	--primary-foreground: oklch(0.21 0.034 264.665); /* Sail 950 */
+	--secondary: oklch(0.278 0.033 256.848); /* Sail 800 */
+	--secondary-foreground: oklch(0.985 0.002 247.839); /* Sail 100 */
+	--muted: oklch(0.278 0.033 256.848); /* Sail 800 */
+	--muted-foreground: oklch(0.707 0.022 261.325); /* Sail 300 */
+	--accent: oklch(0.278 0.033 256.848); /* Sail 700 */
+	--accent-foreground: oklch(0.985 0.002 247.839); /* Sail 100 */
+	--destructive: oklch(0.704 0.191 22.216); /* Red 50 (#fa4d56) */
+	--border: oklch(1 0 0 / 10%); /* Sail 800 */
+	--input: oklch(1 0 0 / 15%); /* Sail 800 */
+	--ring: oklch(0.551 0.027 264.364); /* Sail 500 */
+	--chart-1: oklch(0.488 0.243 264.376); /* Sail 400 */
+	--chart-2: oklch(0.696 0.17 162.48); /* Sail 500 */
+	--chart-3: oklch(0.769 0.188 70.08); /* Sail 300 */
+	--chart-4: oklch(0.627 0.265 303.9); /* Sail 600 */
+	--chart-5: oklch(0.645 0.246 16.439); /* Sail 700 */
+	--sidebar: oklch(0.21 0.034 264.665); /* Sail 950 */
+	--sidebar-foreground: oklch(0.985 0.002 247.839); /* Sail 100 */
+	--sidebar-primary: oklch(0.488 0.243 264.376); /* Sail 400 */
+	--sidebar-primary-foreground: oklch(0.985 0.002 247.839); /* Sail 950 */
+	--sidebar-accent: oklch(0.278 0.033 256.848); /* Sail 800 */
+	--sidebar-accent-foreground: oklch(0.985 0.002 247.839); /* Sail 100 */
+	--sidebar-border: oklch(1 0 0 / 10%); /* Sail 800 */
+	--sidebar-ring: oklch(0.551 0.027 264.364); /* Sail 500 */
+}
+
+button {
+	cursor: pointer;
+}
+
+@layer base {
+	* {
+		@apply border-border outline-ring/50;
+	}
+	body {
+		@apply bg-background text-foreground;
+	}
 }

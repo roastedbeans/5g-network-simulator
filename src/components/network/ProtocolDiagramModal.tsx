@@ -1,8 +1,8 @@
 import React, { useEffect, useRef } from 'react';
-import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button } from '@heroui/react';
-import { Spinner } from '@heroui/react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { TransformComponent, TransformWrapper, useControls } from 'react-zoom-pan-pinch';
-import { LucidePlus, LucideMinus, LucideRefreshCcw } from 'lucide-react';
+import { LucidePlus, LucideMinus, LucideRefreshCcw, Loader2 } from 'lucide-react';
 
 interface ProtocolDiagramModalProps {
 	isOpen: boolean;
@@ -21,21 +21,21 @@ const Controls = () => {
 	return (
 		<div className='flex items-center gap-2'>
 			<Button
-				onPress={() => zoomIn()}
-				isIconOnly
-				variant='bordered'>
+				onClick={() => zoomIn()}
+				size='sm'
+				variant='outline'>
 				<LucidePlus size={16} />
 			</Button>
 			<Button
-				onPress={() => zoomOut()}
-				isIconOnly
-				variant='bordered'>
+				onClick={() => zoomOut()}
+				size='sm'
+				variant='outline'>
 				<LucideMinus size={16} />
 			</Button>
 			<Button
-				onPress={() => resetTransform()}
-				isIconOnly
-				variant='bordered'>
+				onClick={() => resetTransform()}
+				size='sm'
+				variant='outline'>
 				<LucideRefreshCcw size={16} />
 			</Button>
 		</div>
@@ -174,25 +174,22 @@ const ProtocolDiagramModal: React.FC<ProtocolDiagramModalProps> = ({ isOpen, onC
 	}, [isOpen, roamingDiagram]);
 
 	return (
-		<Modal
-			isOpen={isOpen}
-			onClose={onClose}
-			size='5xl'>
-			<ModalContent>
+		<Dialog
+			open={isOpen}
+			onOpenChange={onClose}>
+			<DialogContent className='max-w-7xl max-h-[90vh]'>
 				<TransformWrapper
 					initialScale={2.5}
 					initialPositionX={100}
 					initialPositionY={0}>
-					<ModalHeader>
-						<div>
-							<h4>5G Roaming Protocol Diagram with SCP Model D</h4>
-							<p className='text-sm text-gray-600 dark:text-gray-400'>
-								Service Communication Proxy enables indirect communication between network functions
-							</p>
-						</div>
-					</ModalHeader>
+					<DialogHeader>
+						<DialogTitle>5G Roaming Protocol Diagram with SCP Model D</DialogTitle>
+						<p className='text-sm text-gray-600 dark:text-gray-400'>
+							Service Communication Proxy enables indirect communication between network functions
+						</p>
+					</DialogHeader>
 
-					<ModalBody>
+					<div className='flex-1 overflow-auto'>
 						<TransformComponent
 							wrapperStyle={{
 								width: '100%',
@@ -204,18 +201,19 @@ const ProtocolDiagramModal: React.FC<ProtocolDiagramModalProps> = ({ isOpen, onC
 										ref={diagramRef}
 										className='mermaid w-full'>
 										<div className='flex items-center justify-center h-full'>
-											<Spinner size='lg' />
+											<Loader2 className='h-8 w-8 animate-spin' />
 										</div>
 									</div>
 								) : (
 									<div className='flex items-center justify-center h-full'>
-										<Spinner size='lg' />
+										<Loader2 className='h-8 w-8 animate-spin' />
 									</div>
 								)}
 							</div>
 						</TransformComponent>
-					</ModalBody>
-					<ModalFooter className='flex items-center justify-between'>
+					</div>
+
+					<DialogFooter className='flex items-center justify-between'>
 						<div className='flex flex-col gap-1'>
 							<Controls />
 							<div className='text-xs text-gray-500'>
@@ -227,14 +225,14 @@ const ProtocolDiagramModal: React.FC<ProtocolDiagramModalProps> = ({ isOpen, onC
 							</div>
 						</div>
 						<Button
-							onPress={onClose}
-							variant='solid'>
+							onClick={onClose}
+							variant='default'>
 							Close
 						</Button>
-					</ModalFooter>
+					</DialogFooter>
 				</TransformWrapper>
-			</ModalContent>
-		</Modal>
+			</DialogContent>
+		</Dialog>
 	);
 };
 

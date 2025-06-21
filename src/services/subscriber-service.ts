@@ -21,10 +21,8 @@ export interface Subscriber {
 	network_access_mode?: number;
 	subscribed_rau_tau_timer?: number;
 	operator_determined_barring?: number;
-	roaming_allowed?: boolean;
 	created_at?: string;
 	updated_at?: string;
-	last_seen?: string;
 	status: 'active' | 'inactive' | 'suspended';
 }
 
@@ -77,6 +75,8 @@ interface GetSubscribersParams {
 	limit?: number;
 	search?: string;
 	status?: string;
+	sortBy?: string;
+	sortOrder?: 'asc' | 'desc';
 }
 
 interface BatchSubscriberParams {
@@ -88,7 +88,9 @@ interface BatchSubscriberParams {
 	amf: string;
 	sqn: string;
 	status: 'active' | 'inactive' | 'suspended';
-	roaming_allowed: boolean;
+	subscriber_status?: number;
+	operator_determined_barring?: number;
+	slice?: NetworkSlice[];
 }
 
 // Define Mongoose schema for Subscriber
@@ -155,13 +157,11 @@ const SubscriberSchema = new mongoose.Schema(
 		network_access_mode: { type: Number },
 		subscribed_rau_tau_timer: { type: Number },
 		operator_determined_barring: { type: Number },
-		roaming_allowed: { type: Boolean, default: true },
 		status: {
 			type: String,
 			enum: ['active', 'inactive', 'suspended'],
 			default: 'active',
 		},
-		last_seen: { type: Date },
 	},
 	{ timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } }
 );
@@ -191,16 +191,21 @@ const formatSubscriber = (doc: any): Subscriber => {
 		network_access_mode: docObj.network_access_mode,
 		subscribed_rau_tau_timer: docObj.subscribed_rau_tau_timer,
 		operator_determined_barring: docObj.operator_determined_barring,
-		roaming_allowed: docObj.roaming_allowed,
 		created_at: docObj.created_at?.toISOString(),
 		updated_at: docObj.updated_at?.toISOString(),
-		last_seen: docObj.last_seen?.toISOString(),
 		status: docObj.status,
 	};
 };
 
-export async function getSubscribers({ page = 1, limit = 10, search = '', status = 'all' }: GetSubscribersParams) {
-	console.log('Fetching subscribers with params:', { page, limit, search, status });
+export async function getSubscribers({
+	page = 1,
+	limit = 10,
+	search = '',
+	status = 'all',
+	sortBy = 'imsi',
+	sortOrder = 'asc',
+}: GetSubscribersParams) {
+	console.log('Fetching subscribers with params:', { page, limit, search, status, sortBy, sortOrder });
 
 	try {
 		await dbConnect();
@@ -219,10 +224,19 @@ export async function getSubscribers({ page = 1, limit = 10, search = '', status
 
 		console.log('Executing query:', JSON.stringify(queryFilter));
 
-		// Execute query with pagination
+		// Build sort object
+		const sortObject: any = {};
+		if (sortBy) {
+			sortObject[sortBy] = sortOrder === 'desc' ? -1 : 1;
+		} else {
+			sortObject.imsi = 1; // Default sort by IMSI ascending
+		}
+
+		// Execute query with pagination and sorting
 		const skip = (page - 1) * limit;
 		const SubscriberModel = getSubscriberModel();
 		console.log('Collection name:', SubscriberModel.collection.name);
+		console.log('Sort object:', sortObject);
 
 		try {
 			// First, let's check if the collection exists and has data
@@ -230,7 +244,7 @@ export async function getSubscribers({ page = 1, limit = 10, search = '', status
 			console.log('Total documents in collection:', collectionCount);
 
 			const [subscribers, total] = await Promise.all([
-				SubscriberModel.find(queryFilter).sort({ created_at: -1 }).skip(skip).limit(limit).lean(),
+				SubscriberModel.find(queryFilter).sort(sortObject).skip(skip).limit(limit).lean(),
 				SubscriberModel.countDocuments(queryFilter),
 			]);
 
@@ -240,49 +254,9 @@ export async function getSubscribers({ page = 1, limit = 10, search = '', status
 				subscribers[0] ? JSON.stringify(subscribers[0], null, 2) : 'No subscribers found'
 			);
 
-			// If no subscribers found but we should have some, check if we're connected to the right database
+			// Return empty result if no subscribers found
 			if (subscribers.length === 0 && total === 0) {
-				// Create a test subscriber if collection is empty
-				console.log('No subscribers found. Adding a test subscriber...');
-				const testSubscriber = {
-					imsi: '001010000000001',
-					msisdn: '1234567890',
-					k: DEFAULT_KEY,
-					opc: DEFAULT_OPC,
-					amf: '8000',
-					sqn: '000000000000',
-					status: 'active' as const,
-					roaming_allowed: true,
-				};
-
-				try {
-					const existing = await SubscriberModel.findOne({ imsi: testSubscriber.imsi });
-					if (!existing) {
-						const newSubscriber = new SubscriberModel(testSubscriber);
-						await newSubscriber.save();
-						console.log('Test subscriber added successfully');
-
-						// Re-fetch after adding test subscriber
-						const [newSubscribers, newTotal] = await Promise.all([
-							SubscriberModel.find(queryFilter).sort({ created_at: -1 }).skip(skip).limit(limit).lean(),
-							SubscriberModel.countDocuments(queryFilter),
-						]);
-
-						return {
-							subscribers: newSubscribers.map(formatSubscriber),
-							pagination: {
-								total: newTotal,
-								page,
-								limit,
-								pages: Math.ceil(newTotal / limit),
-							},
-						};
-					} else {
-						console.log('Test subscriber already exists');
-					}
-				} catch (err) {
-					console.error('Error creating test subscriber:', err);
-				}
+				console.log('No subscribers found in database');
 			}
 
 			return {
@@ -335,19 +309,10 @@ export async function getSubscriberById(id: string) {
 }
 
 export async function createSubscriber(data: Partial<Subscriber>) {
-	console.log('Creating subscriber with data:', data);
+	console.log('Creating/updating subscriber with data:', data);
 
 	try {
 		await dbConnect();
-
-		// Check if IMSI already exists
-		const SubscriberModel = getSubscriberModel();
-		const existing = await SubscriberModel.findOne({ imsi: data.imsi });
-
-		if (existing) {
-			console.warn(`Subscriber with IMSI ${data.imsi} already exists`);
-			throw new Error(`Subscriber with IMSI ${data.imsi} already exists`);
-		}
 
 		// Ensure required fields
 		if (!data.imsi || !data.k || !data.opc) {
@@ -355,14 +320,35 @@ export async function createSubscriber(data: Partial<Subscriber>) {
 			throw new Error('Missing required fields: IMSI, K, and OPc are required');
 		}
 
-		// Create the subscriber
-		const subscriber = new SubscriberModel(data);
-		await subscriber.save();
-		console.log('Subscriber created successfully:', subscriber._id);
+		const SubscriberModel = getSubscriberModel();
 
-		return formatSubscriber(subscriber);
+		// Check if subscriber already exists
+		const existingSubscriber = await SubscriberModel.findOne({ imsi: data.imsi }).lean();
+		const isUpdate = !!existingSubscriber;
+
+		// Use findOneAndUpdate with upsert to create or update
+		const subscriber = await SubscriberModel.findOneAndUpdate(
+			{ imsi: data.imsi }, // Find by IMSI
+			{ $set: data }, // Update with new data
+			{
+				new: true, // Return the updated document
+				upsert: true, // Create if doesn't exist
+				lean: true, // Return plain object instead of Mongoose document
+			}
+		);
+
+		if (!subscriber) {
+			throw new Error('Failed to create/update subscriber');
+		}
+
+		console.log(`Subscriber ${isUpdate ? 'updated' : 'created'} successfully:`, (subscriber as any)._id);
+
+		return {
+			subscriber: formatSubscriber(subscriber),
+			isUpdate,
+		};
 	} catch (error) {
-		console.error('Error creating subscriber:', error);
+		console.error('Error creating/updating subscriber:', error);
 		throw error;
 	}
 }
@@ -428,17 +414,26 @@ export async function deleteSubscriber(id: string) {
 export async function createBatchSubscribers(params: BatchSubscriberParams) {
 	await dbConnect();
 
-	const { imsi_start, imsi_end, msisdn_start, k, opc, amf, sqn, status, roaming_allowed } = params;
+	const {
+		imsi_start,
+		imsi_end,
+		msisdn_start,
+		k,
+		opc,
+		amf,
+		sqn,
+		status,
+		subscriber_status,
+		operator_determined_barring,
+		slice,
+	} = params;
 
-	// Convert to BigInt for proper numerical handling
+	// Convert to BigInt for proper numerical handling while preserving leading zeros
 	const startImsi = BigInt(imsi_start);
 	const endImsi = BigInt(imsi_end);
 
 	// Calculate range size
 	const rangeSize = Number(endImsi - startImsi) + 1;
-
-	// Prepare batch insert documents
-	const subscriberDocs = [];
 
 	// Check for existing IMSIs in the range
 	const existingImsis = await getSubscriberModel()
@@ -456,15 +451,15 @@ export async function createBatchSubscribers(params: BatchSubscriberParams) {
 	const existingImsiSet = new Set(existingImsis.map((doc) => doc.imsi));
 
 	let msisdnCounter = msisdn_start ? BigInt(msisdn_start) : null;
+	const operations = [];
+	let createdCount = 0;
+	let updatedCount = 0;
 
-	// Create subscriber documents
+	// Process each IMSI in the range
 	for (let i = 0; i < rangeSize; i++) {
-		const currentImsi = (startImsi + BigInt(i)).toString();
-
-		// Skip if IMSI already exists
-		if (existingImsiSet.has(currentImsi)) {
-			continue;
-		}
+		// Preserve leading zeros by padding to 15 digits
+		const currentImsi = (startImsi + BigInt(i)).toString().padStart(15, '0');
+		const isUpdate = existingImsiSet.has(currentImsi);
 
 		const subscriberData: any = {
 			imsi: currentImsi,
@@ -473,25 +468,88 @@ export async function createBatchSubscribers(params: BatchSubscriberParams) {
 			amf,
 			sqn,
 			status,
-			roaming_allowed,
+			subscriber_status: subscriber_status ?? 0,
+			operator_determined_barring: operator_determined_barring ?? 0,
 		};
+
+		// Add slice configuration if provided
+		if (slice && slice.length > 0) {
+			subscriberData.slice = slice;
+		}
 
 		// Assign sequential MSISDN if msisdn_start was provided
 		if (msisdnCounter) {
-			subscriberData.msisdn = msisdnCounter.toString();
+			// Preserve original MSISDN length by padding with zeros if needed
+			const originalLength = msisdn_start?.length || 10;
+			subscriberData.msisdn = msisdnCounter.toString().padStart(originalLength, '0');
 			msisdnCounter = msisdnCounter + BigInt(1);
 		}
 
-		subscriberDocs.push(subscriberData);
+		// Use upsert operation (update if exists, create if not)
+		operations.push({
+			updateOne: {
+				filter: { imsi: currentImsi },
+				update: { $set: subscriberData },
+				upsert: true,
+			},
+		});
+
+		if (isUpdate) {
+			updatedCount++;
+		} else {
+			createdCount++;
+		}
 	}
 
-	// Insert subscribers in batch if any
-	const createdSubscribers = [];
-	if (subscriberDocs.length > 0) {
-		const result = await getSubscriberModel().insertMany(subscriberDocs);
-		createdSubscribers.push(...result);
+	// Execute bulk upsert operations
+	const processedSubscribers = [];
+	if (operations.length > 0) {
+		await getSubscriberModel().bulkWrite(operations);
+
+		// Fetch the updated/created subscribers
+		const subscriberResults = await getSubscriberModel()
+			.find({
+				imsi: {
+					$gte: imsi_start,
+					$lte: imsi_end,
+				},
+			})
+			.lean();
+
+		processedSubscribers.push(...subscriberResults.map(formatSubscriber));
 	}
 
-	// Return created subscribers
-	return createdSubscribers.map(formatSubscriber);
+	return {
+		subscribers: processedSubscribers,
+		createdCount,
+		updatedCount,
+		totalProcessed: createdCount + updatedCount,
+	};
+}
+
+export async function deleteAllSubscribers() {
+	console.log('Deleting all subscribers');
+
+	try {
+		await dbConnect();
+
+		const SubscriberModel = getSubscriberModel();
+
+		// Get count before deletion for logging
+		const countBefore = await SubscriberModel.countDocuments({});
+		console.log(`Found ${countBefore} subscribers to delete`);
+
+		// Delete all subscribers
+		const result = await SubscriberModel.deleteMany({});
+
+		console.log(`Successfully deleted ${result.deletedCount} subscribers`);
+
+		return {
+			deletedCount: result.deletedCount,
+			success: true,
+		};
+	} catch (error) {
+		console.error('Error deleting all subscribers:', error);
+		throw error;
+	}
 }

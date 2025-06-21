@@ -20,7 +20,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { NetworkFunction, Connection, Message } from '@/types/network';
-import { Button } from '@heroui/react';
+import { Button } from '@/components/ui/button';
 import NetworkFunctionNode from './NetworkNode';
 import FloatingEdge from './FloatingEdge';
 import dynamic from 'next/dynamic';
@@ -444,35 +444,35 @@ export function NetworkVisualizer({
 				{/* Simple control buttons */}
 				<div className='absolute top-3 left-3 z-10 flex space-x-1.5 bg-white dark:bg-gray-700 p-1.5 rounded shadow'>
 					<Button
-						onPress={resetView}
+						onClick={resetView}
 						title='Fit view'
 						size='sm'
 						variant='ghost'>
 						Fit View
 					</Button>
 					<Button
-						onPress={() => zoomIn()}
+						onClick={() => zoomIn()}
 						title='Zoom In'
 						size='sm'
 						variant='ghost'>
 						+
 					</Button>
 					<Button
-						onPress={() => zoomOut()}
+						onClick={() => zoomOut()}
 						title='Zoom Out'
 						size='sm'
 						variant='ghost'>
 						-
 					</Button>
 					<Button
-						onPress={applyAutoLayout}
+						onClick={applyAutoLayout}
 						title='Auto Layout'
 						size='sm'
 						variant='ghost'>
 						Auto Layout
 					</Button>
 					<Button
-						onPress={() => {
+						onClick={() => {
 							// Log node positions to console for debugging
 							console.log(
 								'Node Positions:',
@@ -494,10 +494,10 @@ export function NetworkVisualizer({
 				{/* Protocol Diagram Button */}
 				<div className='absolute top-3 right-3 z-10'>
 					<Button
-						onPress={() => setIsProtocolModalOpen(true)}
+						onClick={() => setIsProtocolModalOpen(true)}
 						title='Show Protocol Diagram'
 						size='sm'
-						variant='solid'
+						variant='default'
 						className='bg-white dark:bg-gray-700 shadow'>
 						Protocol Diagram
 					</Button>

@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import NavigationBar from '@/components/ui/NavigationBar';
+import Providers from './providers';
 
 export const metadata: Metadata = {
 	title: '5G Network Simulator',
@@ -13,7 +15,14 @@ export default function RootLayout({
 }>) {
 	return (
 		<html lang='en'>
-			<body className='bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100'>{children}</body>
+			<body className='bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100'>
+				<Providers>
+					<div className='sticky top-0 z-[999] w-full'>
+						<NavigationBar />
+					</div>
+					{children}
+				</Providers>
+			</body>
 		</html>
 	);
 }

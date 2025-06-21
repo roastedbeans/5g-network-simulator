@@ -1,5 +1,5 @@
 'use client';
-import { RefreshCw, Plus, X } from 'lucide-react';
+import { RefreshCw, Plus, X, Users, Eye } from 'lucide-react';
 import React, { useState } from 'react';
 import { Subscriber } from '@/services/subscriber-service';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
@@ -12,37 +12,73 @@ import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 
-interface SubscriberFormProps {
+interface BulkSubscriberFormProps {
 	isOpen: boolean;
 	onClose: () => void;
-	selectedSubscriber: Subscriber | null;
-	showCreateModal: boolean;
-	showEditModal: boolean;
-	setShowCreateModal: React.Dispatch<React.SetStateAction<boolean>>;
-	setShowEditModal: React.Dispatch<React.SetStateAction<boolean>>;
-	formData: Partial<Subscriber>;
-	setFormData: React.Dispatch<React.SetStateAction<Partial<Subscriber>>>;
-	setSelectedSubscriber: React.Dispatch<React.SetStateAction<Subscriber | null>>;
-	saveLoading: boolean;
-	successMessage: string | null;
-	setSuccessMessage: React.Dispatch<React.SetStateAction<string | null>>;
-	handleSave: () => Promise<void>;
+	onSuccess: () => void;
 }
 
-const SubscriberForm = ({
-	isOpen,
-	onClose,
-	selectedSubscriber,
-	setShowCreateModal,
-	setShowEditModal,
-	formData,
-	setFormData,
-	setSelectedSubscriber,
-	saveLoading,
-	successMessage,
-	setSuccessMessage,
-	handleSave,
-}: SubscriberFormProps) => {
+interface BulkCreateData {
+	startImsi: string;
+	count: number;
+	templateData: Partial<Subscriber>;
+	incrementMsisdn: boolean;
+	startMsisdn?: string;
+}
+
+const BulkSubscriberForm = ({ isOpen, onClose, onSuccess }: BulkSubscriberFormProps) => {
+	const [bulkData, setBulkData] = useState<BulkCreateData>({
+		startImsi: '',
+		count: 10,
+		incrementMsisdn: false,
+		startMsisdn: '',
+		templateData: {
+			k: '465B5CE8B199B49FAA5F0A2EE238A6BC',
+			opc: 'E8ED289DEBA952E4283B54E88E6183CA',
+			amf: '8000',
+			sqn: '000000000000',
+			status: 'active',
+			subscriber_status: 0,
+			operator_determined_barring: 0,
+			slice: [
+				{
+					sst: 1,
+					sd: '',
+					default_indicator: true,
+					session: [
+						{
+							name: 'internet',
+							type: 2, // IPv4v6
+							pcc_rule: [],
+							ambr: {
+								uplink: { value: 1, unit: 'Gbps' },
+								downlink: { value: 1, unit: 'Gbps' },
+							},
+							qos: {
+								index: 9,
+								arp: {
+									priority_level: 8,
+									pre_emption_capability: 0,
+									pre_emption_vulnerability: 0,
+								},
+							},
+						},
+					],
+				},
+			],
+		},
+	});
+
+	const [loading, setLoading] = useState(false);
+	const [preview, setPreview] = useState<{ startImsi: string; endImsi: string; imsiList: string[] }>({
+		startImsi: '',
+		endImsi: '',
+		imsiList: [],
+	});
+	const [showPreview, setShowPreview] = useState(false);
+	const [successMessage, setSuccessMessage] = useState<string | null>(null);
+	const [error, setError] = useState<string | null>(null);
+
 	// Helper function to add a new slice
 	const addSlice = () => {
 		const newSlice = {
@@ -52,25 +88,34 @@ const SubscriberForm = ({
 			session: [],
 		};
 
-		setFormData((prev) => ({
+		setBulkData((prev) => ({
 			...prev,
-			slice: [...(prev.slice || []), newSlice],
+			templateData: {
+				...prev.templateData,
+				slice: [...(prev.templateData.slice || []), newSlice],
+			},
 		}));
 	};
 
 	// Helper function to remove a slice
 	const removeSlice = (index: number) => {
-		setFormData((prev) => ({
+		setBulkData((prev) => ({
 			...prev,
-			slice: prev.slice?.filter((_, i) => i !== index) || [],
+			templateData: {
+				...prev.templateData,
+				slice: prev.templateData.slice?.filter((_, i) => i !== index) || [],
+			},
 		}));
 	};
 
 	// Helper function to update slice
 	const updateSlice = (index: number, field: string, value: any) => {
-		setFormData((prev) => ({
+		setBulkData((prev) => ({
 			...prev,
-			slice: prev.slice?.map((slice, i) => (i === index ? { ...slice, [field]: value } : slice)) || [],
+			templateData: {
+				...prev.templateData,
+				slice: prev.templateData.slice?.map((slice, i) => (i === index ? { ...slice, [field]: value } : slice)) || [],
+			},
 		}));
 	};
 
@@ -94,41 +139,51 @@ const SubscriberForm = ({
 			},
 		};
 
-		setFormData((prev) => ({
+		setBulkData((prev) => ({
 			...prev,
-			slice:
-				prev.slice?.map((slice, i) =>
-					i === sliceIndex ? { ...slice, session: [...(slice.session || []), newSession] } : slice
-				) || [],
+			templateData: {
+				...prev.templateData,
+				slice:
+					prev.templateData.slice?.map((slice, i) =>
+						i === sliceIndex ? { ...slice, session: [...(slice.session || []), newSession] } : slice
+					) || [],
+			},
 		}));
 	};
 
 	// Helper function to remove a session
 	const removeSession = (sliceIndex: number, sessionIndex: number) => {
-		setFormData((prev) => ({
+		setBulkData((prev) => ({
 			...prev,
-			slice:
-				prev.slice?.map((slice, i) =>
-					i === sliceIndex ? { ...slice, session: slice.session?.filter((_, j) => j !== sessionIndex) || [] } : slice
-				) || [],
+			templateData: {
+				...prev.templateData,
+				slice:
+					prev.templateData.slice?.map((slice, i) =>
+						i === sliceIndex ? { ...slice, session: slice.session?.filter((_, j) => j !== sessionIndex) || [] } : slice
+					) || [],
+			},
 		}));
 	};
 
 	// Helper function to update session
 	const updateSession = (sliceIndex: number, sessionIndex: number, field: string, value: any) => {
-		setFormData((prev) => ({
+		setBulkData((prev) => ({
 			...prev,
-			slice:
-				prev.slice?.map((slice, i) =>
-					i === sliceIndex
-						? {
-								...slice,
-								session:
-									slice.session?.map((session, j) => (j === sessionIndex ? { ...session, [field]: value } : session)) ||
-									[],
-						  }
-						: slice
-				) || [],
+			templateData: {
+				...prev.templateData,
+				slice:
+					prev.templateData.slice?.map((slice, i) =>
+						i === sliceIndex
+							? {
+									...slice,
+									session:
+										slice.session?.map((session, j) =>
+											j === sessionIndex ? { ...session, [field]: value } : session
+										) || [],
+							  }
+							: slice
+					) || [],
+			},
 		}));
 	};
 
@@ -140,108 +195,363 @@ const SubscriberForm = ({
 		field: string,
 		value: any
 	) => {
-		setFormData((prev) => ({
+		setBulkData((prev) => ({
 			...prev,
-			slice:
-				prev.slice?.map((slice, i) =>
-					i === sliceIndex
-						? {
-								...slice,
-								session:
-									slice.session?.map((session, j) =>
-										j === sessionIndex
-											? {
-													...session,
-													[parentField]: {
-														...(session[parentField as keyof typeof session] as any),
-														[field]: value,
-													},
-											  }
-											: session
-									) || [],
-						  }
-						: slice
-				) || [],
+			templateData: {
+				...prev.templateData,
+				slice:
+					prev.templateData.slice?.map((slice, i) =>
+						i === sliceIndex
+							? {
+									...slice,
+									session:
+										slice.session?.map((session, j) =>
+											j === sessionIndex
+												? {
+														...session,
+														[parentField]: {
+															...(session[parentField as keyof typeof session] as any),
+															[field]: value,
+														},
+												  }
+												: session
+										) || [],
+							  }
+							: slice
+					) || [],
+			},
 		}));
+	};
+
+	// Generate preview of IMSIs to be created
+	const generatePreview = () => {
+		if (!bulkData.startImsi || !bulkData.count || bulkData.count <= 0) return;
+
+		setShowPreview(!showPreview);
+
+		try {
+			const startImsi = BigInt(bulkData.startImsi);
+			const imsiList: string[] = [];
+
+			for (let i = 0; i < Math.min(bulkData.count, 10); i++) {
+				// Show max 10 in preview, preserve leading zeros by padding to 15 digits
+				imsiList.push((startImsi + BigInt(i)).toString().padStart(15, '0'));
+			}
+
+			// Preserve leading zeros by padding to 15 digits
+			const endImsi = (startImsi + BigInt(bulkData.count - 1)).toString().padStart(15, '0');
+
+			setPreview({
+				startImsi: bulkData.startImsi,
+				endImsi,
+				imsiList,
+			});
+		} catch (error) {
+			setError('Invalid start IMSI format');
+		}
+	};
+
+	const handleSubmit = async () => {
+		setLoading(true);
+		setError(null);
+		setSuccessMessage(null);
+
+		try {
+			console.log('Starting bulk submission with data:', bulkData);
+
+			// Validate inputs
+			if (!bulkData.startImsi || !bulkData.count) {
+				throw new Error('Start IMSI and count are required');
+			}
+
+			if (bulkData.count > 1000) {
+				throw new Error('Cannot process more than 1000 subscribers at once');
+			}
+
+			if (!/^\d{15}$/.test(bulkData.startImsi)) {
+				throw new Error('Start IMSI must be exactly 15 digits');
+			}
+
+			if (bulkData.incrementMsisdn && bulkData.startMsisdn && !/^\d+$/.test(bulkData.startMsisdn)) {
+				throw new Error('Start MSISDN must contain only digits');
+			}
+
+			// Calculate end IMSI, preserve leading zeros by padding to 15 digits
+			const startImsi = BigInt(bulkData.startImsi);
+			const endImsi = (startImsi + BigInt(bulkData.count - 1)).toString().padStart(15, '0');
+
+			console.log('Calculated IMSI range:', { startImsi: bulkData.startImsi, endImsi, count: bulkData.count });
+
+			// Prepare API payload
+			const payload: any = {
+				imsi_start: bulkData.startImsi,
+				imsi_end: endImsi,
+				k: bulkData.templateData.k || '465B5CE8B199B49FAA5F0A2EE238A6BC',
+				opc: bulkData.templateData.opc || 'E8ED289DEBA952E4283B54E88E6183CA',
+				amf: bulkData.templateData.amf || '8000',
+				sqn: bulkData.templateData.sqn || '000000000000',
+				status: bulkData.templateData.status || 'active',
+				subscriber_status: bulkData.templateData.subscriber_status || 0,
+				operator_determined_barring: bulkData.templateData.operator_determined_barring || 0,
+				slice: bulkData.templateData.slice || [],
+			};
+
+			// Only include msisdn_start if incrementMsisdn is enabled and startMsisdn is provided
+			if (bulkData.incrementMsisdn && bulkData.startMsisdn && bulkData.startMsisdn.trim()) {
+				payload.msisdn_start = bulkData.startMsisdn.trim();
+			}
+
+			console.log('Sending payload to API:', JSON.stringify(payload, null, 2));
+
+			const response = await fetch('/api/subscribers/batch', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify(payload),
+			});
+
+			console.log('API response status:', response.status);
+
+			if (!response.ok) {
+				const errorData = await response.json();
+				console.error('API error response:', errorData);
+				throw new Error(errorData.error || 'Failed to process subscribers');
+			}
+
+			const result = await response.json();
+			console.log('API success response:', result);
+			setSuccessMessage(result.message || `Successfully processed ${result.count} subscribers`);
+
+			// Reset form after success
+			setTimeout(() => {
+				onSuccess();
+				handleClose();
+			}, 1500);
+		} catch (error) {
+			console.error('Bulk submission error:', error);
+			setError(error instanceof Error ? error.message : 'An unknown error occurred');
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const handleClose = () => {
+		setBulkData({
+			startImsi: '',
+			count: 10,
+			incrementMsisdn: false,
+			startMsisdn: '',
+			templateData: {
+				k: '465B5CE8B199B49FAA5F0A2EE238A6BC',
+				opc: 'E8ED289DEBA952E4283B54E88E6183CA',
+				amf: '8000',
+				sqn: '000000000000',
+				status: 'active',
+				subscriber_status: 0,
+				operator_determined_barring: 0,
+				slice: [
+					{
+						sst: 1,
+						sd: '',
+						default_indicator: true,
+						session: [
+							{
+								name: 'internet',
+								type: 2,
+								pcc_rule: [],
+								ambr: {
+									uplink: { value: 1, unit: 'Gbps' },
+									downlink: { value: 1, unit: 'Gbps' },
+								},
+								qos: {
+									index: 9,
+									arp: {
+										priority_level: 8,
+										pre_emption_capability: 0,
+										pre_emption_vulnerability: 0,
+									},
+								},
+							},
+						],
+					},
+				],
+			},
+		});
+		setShowPreview(false);
+		setSuccessMessage(null);
+		setError(null);
+		onClose();
 	};
 
 	return (
 		<Dialog
 			open={isOpen}
-			onOpenChange={onClose}>
-			<DialogContent className='sm:max-w-4xl h-fit max-h-[70vh] overflow-y-scroll overflow-x-hidden rounded-none'>
+			onOpenChange={handleClose}>
+			<DialogContent className='sm:max-w-4xl max-h-[70vh] overflow-y-scroll overflow-x-hidden rounded-none'>
 				<DialogHeader>
-					<DialogTitle>{selectedSubscriber ? 'Edit Subscriber' : 'Create New Subscriber'}</DialogTitle>
+					<DialogTitle className='flex items-center gap-2'>
+						<Users className='w-5 h-5' />
+						Bulk Create Subscribers
+					</DialogTitle>
 				</DialogHeader>
 
-				{/* Basic Authentication Fields */}
+				{/* Bulk Configuration */}
 				<Card className='w-full'>
 					<CardHeader>
-						<h4 className='text-md font-semibold'>Authentication Information</h4>
+						<h4 className='text-md font-semibold'>Bulk Creation Settings</h4>
 					</CardHeader>
 					<CardContent className='space-y-4'>
 						<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 							<div>
 								<Label
-									htmlFor='imsi'
+									htmlFor='startImsi'
 									className='block text-sm font-medium mb-1'>
-									IMSI <span className='text-red-500'>*</span>
+									Start IMSI <span className='text-red-500'>*</span>
 								</Label>
 								<Input
-									id='imsi'
+									id='startImsi'
 									type='text'
 									placeholder='001010000000001'
-									value={formData.imsi || ''}
-									onChange={(e) => setFormData((prev) => ({ ...prev, imsi: e.target.value }))}
+									value={bulkData.startImsi}
+									onChange={(e) => setBulkData((prev) => ({ ...prev, startImsi: e.target.value }))}
 									required
 								/>
+								<p className='text-xs text-gray-500 mt-1'>15-digit IMSI starting point</p>
 							</div>
 
 							<div>
 								<Label
-									htmlFor='msisdn'
+									htmlFor='count'
 									className='block text-sm font-medium mb-1'>
-									MSISDN
+									Count <span className='text-red-500'>*</span>
 								</Label>
 								<Input
-									id='msisdn'
-									type='text'
-									placeholder='1234567890'
-									value={formData.msisdn || ''}
-									onChange={(e) => setFormData((prev) => ({ ...prev, msisdn: e.target.value }))}
+									id='count'
+									type='number'
+									min='1'
+									max='1000'
+									placeholder='10'
+									value={bulkData.count}
+									onChange={(e) => setBulkData((prev) => ({ ...prev, count: parseInt(e.target.value) || 1 }))}
+									required
 								/>
+								<p className='text-xs text-gray-500 mt-1'>Number of subscribers to create (max 1000)</p>
 							</div>
 						</div>
 
 						<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+							<div className='flex items-center space-x-2'>
+								<Checkbox
+									id='incrementMsisdn'
+									checked={bulkData.incrementMsisdn}
+									onCheckedChange={(checked) =>
+										setBulkData((prev) => ({ ...prev, incrementMsisdn: checked as boolean }))
+									}
+								/>
+								<Label htmlFor='incrementMsisdn'>Auto-increment MSISDN</Label>
+							</div>
+							<div className='flex items-center space-x-2'>
+								<Checkbox
+									id='previewImsis'
+									checked={showPreview}
+									onCheckedChange={generatePreview}
+									disabled={!bulkData.startImsi || !bulkData.count}
+								/>
+								<Label htmlFor='previewImsis'>Preview IMSIs</Label>
+							</div>
+
+							{bulkData.incrementMsisdn && (
+								<div>
+									<Label
+										htmlFor='startMsisdn'
+										className='block text-sm font-medium mb-1'>
+										Start MSISDN
+									</Label>
+									<Input
+										id='startMsisdn'
+										type='text'
+										placeholder='1234567890'
+										value={bulkData.startMsisdn}
+										onChange={(e) => setBulkData((prev) => ({ ...prev, startMsisdn: e.target.value }))}
+									/>
+									<p className='text-xs text-gray-500 mt-1'>Starting MSISDN (will increment for each subscriber)</p>
+								</div>
+							)}
+						</div>
+
+						{/* Preview Panel */}
+						{showPreview && preview.imsiList.length > 0 && (
+							<Card className='border-l-4 border-l-blue-500 bg-blue-50'>
+								<CardContent className='pt-4'>
+									<h5 className='text-sm font-semibold mb-2'>IMSI Preview</h5>
+									<p className='text-sm text-gray-600 mb-2'>
+										Range: {preview.startImsi} - {preview.endImsi} ({bulkData.count} subscribers)
+									</p>
+									<div className='flex flex-wrap gap-1'>
+										{preview.imsiList.map((imsi, index) => (
+											<span
+												key={index}
+												className='text-xs bg-white px-2 py-1 rounded border'>
+												{imsi}
+											</span>
+										))}
+										{bulkData.count > 10 && (
+											<span className='text-xs text-gray-500 px-2 py-1'>... and {bulkData.count - 10} more</span>
+										)}
+									</div>
+								</CardContent>
+							</Card>
+						)}
+					</CardContent>
+				</Card>
+
+				{/* Template Data - Authentication Information */}
+				<Card className='w-full'>
+					<CardHeader>
+						<h4 className='text-md font-semibold'>Template Authentication Information</h4>
+						<p className='text-sm text-gray-600'>These values will be used for all created subscribers</p>
+					</CardHeader>
+					<CardContent className='space-y-4'>
+						<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 							<div>
 								<Label
-									htmlFor='k'
+									htmlFor='templateK'
 									className='block text-sm font-medium mb-1'>
 									K (Authentication Key) <span className='text-red-500'>*</span>
 								</Label>
 								<Input
-									id='k'
+									id='templateK'
 									type='text'
 									placeholder='465B5CE8B199B49FAA5F0A2EE238A6BC'
-									value={formData.k || ''}
-									onChange={(e) => setFormData((prev) => ({ ...prev, k: e.target.value }))}
+									value={bulkData.templateData.k || ''}
+									onChange={(e) =>
+										setBulkData((prev) => ({
+											...prev,
+											templateData: { ...prev.templateData, k: e.target.value },
+										}))
+									}
 									required
 								/>
 							</div>
 
 							<div>
 								<Label
-									htmlFor='opc'
+									htmlFor='templateOpc'
 									className='block text-sm font-medium mb-1'>
 									OPc (Operator Key) <span className='text-red-500'>*</span>
 								</Label>
 								<Input
-									id='opc'
+									id='templateOpc'
 									type='text'
 									placeholder='E8ED289DEBA952E4283B54E88E6183CA'
-									value={formData.opc || ''}
-									onChange={(e) => setFormData((prev) => ({ ...prev, opc: e.target.value }))}
+									value={bulkData.templateData.opc || ''}
+									onChange={(e) =>
+										setBulkData((prev) => ({
+											...prev,
+											templateData: { ...prev.templateData, opc: e.target.value },
+										}))
+									}
 									required
 								/>
 							</div>
@@ -250,32 +560,42 @@ const SubscriberForm = ({
 						<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 							<div>
 								<Label
-									htmlFor='amf'
+									htmlFor='templateAmf'
 									className='block text-sm font-medium mb-1'>
 									AMF (Authentication Management Field) <span className='text-red-500'>*</span>
 								</Label>
 								<Input
-									id='amf'
+									id='templateAmf'
 									type='text'
 									placeholder='8000'
-									value={formData.amf || ''}
-									onChange={(e) => setFormData((prev) => ({ ...prev, amf: e.target.value }))}
+									value={bulkData.templateData.amf || ''}
+									onChange={(e) =>
+										setBulkData((prev) => ({
+											...prev,
+											templateData: { ...prev.templateData, amf: e.target.value },
+										}))
+									}
 									required
 								/>
 							</div>
 
 							<div>
 								<Label
-									htmlFor='sqn'
+									htmlFor='templateSqn'
 									className='block text-sm font-medium mb-1'>
 									SQN (Sequence Number) <span className='text-red-500'>*</span>
 								</Label>
 								<Input
-									id='sqn'
+									id='templateSqn'
 									type='text'
 									placeholder='000000000000'
-									value={formData.sqn || ''}
-									onChange={(e) => setFormData((prev) => ({ ...prev, sqn: e.target.value }))}
+									value={bulkData.templateData.sqn || ''}
+									onChange={(e) =>
+										setBulkData((prev) => ({
+											...prev,
+											templateData: { ...prev.templateData, sqn: e.target.value },
+										}))
+									}
 									required
 								/>
 							</div>
@@ -283,18 +603,23 @@ const SubscriberForm = ({
 					</CardContent>
 				</Card>
 
-				{/* Subscriber Status and Settings */}
+				{/* Template Subscriber Settings */}
 				<Card>
 					<CardHeader>
-						<h4 className='text-md font-semibold'>Subscriber Settings</h4>
+						<h4 className='text-md font-semibold'>Template Subscriber Settings</h4>
 					</CardHeader>
 					<CardContent className='space-y-4'>
 						<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 							<div>
 								<Label className='block text-sm font-medium mb-1'>Subscriber Status (TS 29.272 7.3.29)</Label>
 								<Select
-									value={formData.subscriber_status?.toString() || '0'}
-									onValueChange={(value) => setFormData((prev) => ({ ...prev, subscriber_status: parseInt(value) }))}>
+									value={bulkData.templateData.subscriber_status?.toString() || '0'}
+									onValueChange={(value) =>
+										setBulkData((prev) => ({
+											...prev,
+											templateData: { ...prev.templateData, subscriber_status: parseInt(value) },
+										}))
+									}>
 									<SelectTrigger>
 										<SelectValue placeholder='Select status' />
 									</SelectTrigger>
@@ -306,31 +631,14 @@ const SubscriberForm = ({
 							</div>
 
 							<div>
-								<Label className='block text-sm font-medium mb-1'>Operator Determined Barring (TS 29.272 7.3.30)</Label>
-								<Select
-									value={formData.operator_determined_barring?.toString() || '0'}
-									onValueChange={(value) =>
-										setFormData((prev) => ({ ...prev, operator_determined_barring: parseInt(value) }))
-									}>
-									<SelectTrigger>
-										<SelectValue placeholder='Select barring' />
-									</SelectTrigger>
-									<SelectContent>
-										<SelectItem value='0'>(0) All Packet Oriented Services Barred</SelectItem>
-										<SelectItem value='1'>(1) Roamer Access to HPLMN-AP Barred</SelectItem>
-										<SelectItem value='2'>(2) Roamer Access to VPLMN-AP Barred</SelectItem>
-									</SelectContent>
-								</Select>
-							</div>
-						</div>
-
-						<div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-							<div>
 								<Label className='block text-sm font-medium mb-1'>Status</Label>
 								<Select
-									value={formData.status || 'active'}
+									value={bulkData.templateData.status || 'active'}
 									onValueChange={(value) =>
-										setFormData((prev) => ({ ...prev, status: value as 'active' | 'inactive' | 'suspended' }))
+										setBulkData((prev) => ({
+											...prev,
+											templateData: { ...prev.templateData, status: value as 'active' | 'inactive' | 'suspended' },
+										}))
 									}>
 									<SelectTrigger>
 										<SelectValue placeholder='Select status' />
@@ -346,10 +654,13 @@ const SubscriberForm = ({
 					</CardContent>
 				</Card>
 
-				{/* Slice Configurations */}
+				{/* Template Slice Configurations */}
 				<Card>
 					<CardHeader className='flex flex-row items-center justify-between'>
-						<h4 className='text-md font-semibold'>Slice Configurations</h4>
+						<div>
+							<h4 className='text-md font-semibold'>Template Slice Configurations</h4>
+							<p className='text-sm text-gray-600'>These slice configurations will be applied to all subscribers</p>
+						</div>
 						<Button
 							size='sm'
 							onClick={addSlice}
@@ -359,7 +670,7 @@ const SubscriberForm = ({
 						</Button>
 					</CardHeader>
 					<CardContent className='space-y-6'>
-						{formData.slice?.map((slice, sliceIndex) => (
+						{bulkData.templateData.slice?.map((slice, sliceIndex) => (
 							<div key={sliceIndex}>
 								{sliceIndex > 0 && <Separator className='mb-6' />}
 								<div className='space-y-4'>
@@ -373,6 +684,7 @@ const SubscriberForm = ({
 											<X className='w-4 h-4' />
 										</Button>
 									</div>
+
 									<div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
 										<div>
 											<Label className='block text-sm font-medium mb-1'>SST*</Label>
@@ -467,6 +779,7 @@ const SubscriberForm = ({
 															<X className='w-3 h-3' />
 														</Button>
 													</div>
+
 													<div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
 														<div>
 															<Label className='block text-xs font-medium mb-1'>DNN/APN*</Label>
@@ -676,7 +989,7 @@ const SubscriberForm = ({
 							</div>
 						))}
 
-						{(!formData.slice || formData.slice.length === 0) && (
+						{(!bulkData.templateData.slice || bulkData.templateData.slice.length === 0) && (
 							<div className='text-center py-8 text-gray-500'>
 								<p>No slices configured. Click "Add Slice" to add a slice configuration.</p>
 							</div>
@@ -684,37 +997,40 @@ const SubscriberForm = ({
 					</CardContent>
 				</Card>
 
+				{/* Action Buttons */}
 				<div className='px-6 py-4 border-t border-gray-200 flex justify-between'>
-					{successMessage && (
-						<div className='flex items-center text-green-600'>
-							<span className='text-sm'>{successMessage}</span>
-						</div>
-					)}
+					{/* Status Messages */}
+					<div className='flex items-center'>
+						{successMessage && (
+							<div className='flex items-center text-green-600'>
+								<span className='text-sm'>{successMessage}</span>
+							</div>
+						)}
+						{error && (
+							<div className='flex items-center text-red-600'>
+								<span className='text-sm'>{error}</span>
+							</div>
+						)}
+					</div>
+
+					{/* Buttons */}
 					<div className='flex space-x-3 ml-auto'>
 						<Button
-							onClick={() => {
-								setShowCreateModal(false);
-								setShowEditModal(false);
-								setFormData({});
-								setSelectedSubscriber(null);
-								setSuccessMessage(null);
-							}}
-							disabled={saveLoading}
+							onClick={handleClose}
+							disabled={loading}
 							variant='outline'>
 							Cancel
 						</Button>
 						<Button
-							onClick={handleSave}
-							disabled={saveLoading}>
-							{saveLoading ? (
+							onClick={handleSubmit}
+							disabled={loading}>
+							{loading ? (
 								<>
 									<RefreshCw className='w-4 h-4 mr-2 animate-spin' />
-									{selectedSubscriber ? 'Updating...' : 'Creating...'}
+									Processing...
 								</>
-							) : selectedSubscriber ? (
-								'Update'
 							) : (
-								'Create'
+								`Process ${bulkData.count} Subscribers`
 							)}
 						</Button>
 					</div>
@@ -724,4 +1040,4 @@ const SubscriberForm = ({
 	);
 };
 
-export default SubscriberForm;
+export default BulkSubscriberForm;

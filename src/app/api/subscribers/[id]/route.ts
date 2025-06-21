@@ -4,25 +4,73 @@ import { getSubscriberById, updateSubscriber, deleteSubscriber } from '@/service
 
 // Subscriber update validation schema
 const subscriberUpdateSchema = z.object({
-	msisdn: z.string().regex(/^\d+$/, { message: 'MSISDN must contain only digits' }).optional(),
+	msisdn: z.string().regex(/^\d+$/, { message: 'MSISDN must contain only digits' }).optional().or(z.literal('')),
 	k: z
 		.string()
-		.regex(/^[0-9A-F]{32}$/, { message: 'K must be 32 hexadecimal characters' })
+		.regex(/^[0-9A-Fa-f]{32}$/, { message: 'K must be 32 hexadecimal characters' })
+		.transform((val) => val.toUpperCase())
 		.optional(),
 	opc: z
 		.string()
-		.regex(/^[0-9A-F]{32}$/, { message: 'OPc must be 32 hexadecimal characters' })
+		.regex(/^[0-9A-Fa-f]{32}$/, { message: 'OPc must be 32 hexadecimal characters' })
+		.transform((val) => val.toUpperCase())
 		.optional(),
 	amf: z
 		.string()
-		.regex(/^[0-9A-F]{4}$/, { message: 'AMF must be 4 hexadecimal characters' })
+		.regex(/^[0-9A-Fa-f]{4}$/, { message: 'AMF must be 4 hexadecimal characters' })
+		.transform((val) => val.toUpperCase())
 		.optional(),
 	sqn: z
 		.string()
-		.regex(/^[0-9A-F]{12}$/, { message: 'SQN must be 12 hexadecimal characters' })
+		.regex(/^[0-9A-Fa-f]{12}$/, { message: 'SQN must be 12 hexadecimal characters' })
+		.transform((val) => val.toUpperCase())
 		.optional(),
 	status: z.enum(['active', 'inactive', 'suspended']).optional(),
-	roaming_allowed: z.boolean().optional(),
+	subscriber_status: z.number().int().min(0).max(1).optional(),
+	operator_determined_barring: z.number().int().min(0).max(2).optional(),
+	access_restriction_data: z.number().optional(),
+	network_access_mode: z.number().optional(),
+	subscribed_rau_tau_timer: z.number().optional(),
+	slice: z
+		.array(
+			z.object({
+				sst: z.number().int().min(1).max(4),
+				sd: z.string().optional().or(z.literal('')),
+				default_indicator: z.boolean().optional(),
+				session: z
+					.array(
+						z.object({
+							name: z.string().min(1),
+							type: z.number().int().min(0).max(2),
+							pcc_rule: z.array(z.any()).optional(),
+							ambr: z
+								.object({
+									uplink: z.object({
+										value: z.number().positive(),
+										unit: z.enum(['bps', 'Kbps', 'Mbps', 'Gbps']),
+									}),
+									downlink: z.object({
+										value: z.number().positive(),
+										unit: z.enum(['bps', 'Kbps', 'Mbps', 'Gbps']),
+									}),
+								})
+								.optional(),
+							qos: z
+								.object({
+									index: z.number().int().min(1).max(15),
+									arp: z.object({
+										priority_level: z.number().int().min(1).max(15),
+										pre_emption_capability: z.number().int().min(0).max(1),
+										pre_emption_vulnerability: z.number().int().min(0).max(1),
+									}),
+								})
+								.optional(),
+						})
+					)
+					.optional(),
+			})
+		)
+		.optional(),
 });
 
 type Params = {

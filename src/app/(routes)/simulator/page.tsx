@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { NetworkVisualizer } from '@/components/network/NetworkVisualizer';
 import { NetworkFunction, Connection, Message } from '@/types/network';
-import { Button } from '@heroui/react';
+import { Button } from '@/components/ui/button';
 import { type Edge, ReactFlowProvider, type Node } from '@xyflow/react';
 import NavigationBar from '@/components/ui/NavigationBar';
 
@@ -463,8 +463,8 @@ export default function SimulatorPage() {
 						</div>
 					)}
 					<Button
-						color='primary'
-						onPress={setupRoamingScenario}
+						variant='default'
+						onClick={setupRoamingScenario}
 						disabled={isLoading}>
 						{isLoading ? 'Setting up...' : 'Setup Roaming Scenario'}
 					</Button>

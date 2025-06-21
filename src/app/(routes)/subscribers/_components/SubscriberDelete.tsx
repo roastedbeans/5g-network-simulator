@@ -3,8 +3,8 @@
 import React from 'react';
 import { X, RefreshCw } from 'lucide-react';
 import { Subscriber } from '@/services/subscriber-service';
-import { Modal, ModalBody, ModalContent, ModalHeader, ModalFooter } from '@heroui/react';
-import { Button } from '@heroui/react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 interface SubscriberDeleteProps {
 	showDeleteModal: boolean;
@@ -23,20 +23,19 @@ const SubscriberDelete = ({
 	handleDelete,
 }: SubscriberDeleteProps) => {
 	return (
-		<Modal
-			isOpen={showDeleteModal}
-			onClose={() => setShowDeleteModal(false)}
-			isDismissable>
-			<ModalContent>
-				<ModalHeader>
-					<h3 className='text-lg font-semibold text-gray-900 mb-4'>Confirm Deletion</h3>
-				</ModalHeader>
-				<ModalBody>
+		<Dialog
+			open={showDeleteModal}
+			onOpenChange={setShowDeleteModal}>
+			<DialogContent>
+				<DialogHeader>
+					<DialogTitle className='text-lg font-semibold text-gray-900 mb-4'>Confirm Deletion</DialogTitle>
+				</DialogHeader>
+				<div className='py-4'>
 					<p className='text-gray-600'>
 						Are you sure you want to delete subscriber with IMSI{' '}
 						<strong className='font-mono'>{selectedSubscriber?.imsi}</strong>? This action cannot be undone.
 					</p>
-					<div className='flex justify-between'>
+					<div className='flex justify-between mt-4'>
 						{successMessage && (
 							<div className='flex items-center text-green-600'>
 								<div className='w-5 h-5 mr-2 rounded-full bg-green-100 flex items-center justify-center'>
@@ -56,19 +55,18 @@ const SubscriberDelete = ({
 							</div>
 						)}
 					</div>
-				</ModalBody>
-				<ModalFooter>
+				</div>
+				<DialogFooter>
 					<Button
-						onPress={() => setShowDeleteModal(false)}
-						isDisabled={deleteLoading}
-						variant='flat'
-						color='default'>
+						onClick={() => setShowDeleteModal(false)}
+						disabled={deleteLoading}
+						variant='outline'>
 						Cancel
 					</Button>
 					<Button
-						onPress={handleDelete}
-						isDisabled={deleteLoading}
-						color='danger'>
+						onClick={handleDelete}
+						disabled={deleteLoading}
+						variant='destructive'>
 						{deleteLoading ? (
 							<>
 								<RefreshCw className='w-4 h-4 mr-2 animate-spin' />
@@ -78,9 +76,9 @@ const SubscriberDelete = ({
 							'Delete'
 						)}
 					</Button>
-				</ModalFooter>
-			</ModalContent>
-		</Modal>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
 	);
 };
 
